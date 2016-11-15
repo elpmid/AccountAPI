@@ -36,7 +36,7 @@ open class Tenant() : AbstractEntity() {
     @Column(name = "RENT_CREDIT_AMT")
     lateinit var rentCreditAmount : Money
 
-    @OneToMany(fetch=FetchType.EAGER, cascade=arrayOf(CascadeType.ALL))
+    @OneToMany(fetch=FetchType.LAZY, cascade=arrayOf(CascadeType.ALL))
     @JoinColumn(name="TENANT_ID", nullable=true)
     var rentReceipts: MutableList<RentReceipt> = ArrayList()
 
