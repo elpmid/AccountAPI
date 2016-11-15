@@ -31,7 +31,7 @@ open class TenantServiceImpl : TenantService {
 
 
     //Get Tenant by Id
-    override fun findTenantByIdDomain(tenantId : Long) : Tenant {
+    override fun findTenantByIdDomain(tenantId : Long) : Tenant? {
         return tenantRepository.findOne(tenantId)
     }
 

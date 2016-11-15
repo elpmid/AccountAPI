@@ -12,7 +12,7 @@ interface TenantService {
 
     fun findTenantById(tenantId : Long) : TenantResponse?
 
-    fun findTenantByIdDomain(tenantId : Long) : Tenant
+    fun findTenantByIdDomain(tenantId : Long) : Tenant?
 
     fun doesTenantExist(tenantName : String): Boolean
 
