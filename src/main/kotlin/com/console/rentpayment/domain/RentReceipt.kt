@@ -18,4 +18,5 @@ open class RentReceipt() : AbstractEntity() {
     @Column(name = "AMT", nullable = false)
     lateinit var amount : Money
 
+
 }

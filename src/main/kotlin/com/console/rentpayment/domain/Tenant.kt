@@ -24,20 +24,21 @@ open class Tenant() : AbstractEntity() {
         this.rentCreditAmount = rentCreditAmount
     }
 
-    @Column(name = "NAME")
+    @Column(name = "NAME", unique = true, nullable=false)
     lateinit var name : String
 
-    @Column(name = "WKLY_RENT_AMT")
+    @Column(name = "WKLY_RENT_AMT", nullable=false)
     lateinit var  weeklyRentAmount: Money
 
-    @Column(name = "RENT_DTE_PAID_TO")
+    @Column(name = "RENT_DTE_PAID_TO", nullable=false)
     lateinit var rentDatePaidTo : LocalDateTime
 
-    @Column(name = "RENT_CREDIT_AMT")
+    @Column(name = "RENT_CREDIT_AMT", nullable=false)
     lateinit var rentCreditAmount : Money
 
     @OneToMany(fetch=FetchType.LAZY, cascade=arrayOf(CascadeType.ALL))
     @JoinColumn(name="TENANT_ID", nullable=true)
     var rentReceipts: MutableList<RentReceipt> = ArrayList()
+
 
 }
