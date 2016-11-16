@@ -9,6 +9,7 @@ import org.joda.money.Money
 
 /**
  * Created by Nick on 15/11/2016.
+ * Using implementation from https://gist.github.com/stickfigure/b4d2af290407f9af4cce
  */
 open class MoneySerializer() : JsonSerializer<Money>() {
 
