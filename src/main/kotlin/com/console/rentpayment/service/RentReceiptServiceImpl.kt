@@ -34,9 +34,14 @@ open class RentReceiptServiceImpl : RentReceiptService {
         val weeklyRentAmount: Money = tenant.weeklyRentAmount
         val receiptAmount : Money = rentReceiptRequest.amount
         val totalPaid: Money = tenant.rentCreditAmount.plus(receiptAmount)
+
         if (totalPaid.isGreaterThan(weeklyRentAmount) || totalPaid.equals(weeklyRentAmount)) {
-            tenant.rentDatePaidTo = tenant.rentDatePaidTo.plusWeeks(1)
-            tenant.rentCreditAmount = totalPaid.minus(weeklyRentAmount)
+            var remaining : Money = totalPaid
+            while (remaining.isGreaterThan(weeklyRentAmount) || remaining.equals(weeklyRentAmount)) {
+                tenant.rentDatePaidTo = tenant.rentDatePaidTo.plusWeeks(1)
+                remaining = remaining.minus(weeklyRentAmount)
+            }
+            tenant.rentCreditAmount = remaining
         } else {
             tenant.rentCreditAmount = tenant.rentCreditAmount + receiptAmount
         }

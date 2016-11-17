@@ -272,6 +272,39 @@ class AccountControllerIntgTest {
     }
 
 
+    //Test Create a Rent Receipt for the tenant
+    //Date Paid To does increase by 3 weeks.
+    //Rent Credit goes to what was left over
+    //Amount Paid plus credit is greater than 3 weekly rent amounts
+    @Test
+    fun createRentReceipt_amountPaidPlusCreditGreaterThanThe3WeeklyRents_returnsRentResponse() {
+        // Arrange
+        tenantRepository.deleteAll()
+        val tenants: List<Tenant> = tenantData.createTeants(1)
+        val tenantOne = tenants.get(0)
+
+        var rentReceiptRequest: RentReceiptRequest = RentReceiptRequest(Money.of(CurrencyUnit.of("AUD"), BigDecimal(1500)))
+
+        // Act
+        mockMvc.perform(post("/api/tenants/" + tenantOne.id + "/rentreceipts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .characterEncoding(Charsets.UTF_8.displayName())
+                .content(convertObjectToJsonBytes(rentReceiptRequest)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tenantId", equalTo(tenantOne.id!!.toInt())))
+                .andExpect(jsonPath("$.amount.str", equalTo("1500.00")))
+
+        var tenant : Tenant = tenantRepository.findOne(tenantOne.id)
+        assertThat(tenant.name, `is`("Tenant1"))
+        //Rent Paid To Date increase 3 weeks
+        assertThat(tenant.rentDatePaidTo, `is`(tenantOne.rentDatePaidTo.plusWeeks(3)))
+        assertThat(tenant.weeklyRentAmount, `is`(Money.of(CurrencyUnit.of("AUD"), BigDecimal(500))))
+        //Rent Credit should be 0
+        assertThat(tenant.rentCreditAmount, `is`(Money.of(CurrencyUnit.of("AUD"), BigDecimal(50))))
+    }
+
+
     @Test
     //Test Get all tenants who have a Rent Receipt created in the last N hours
     fun getTenantsWithRentReceiptsCreatedInLastNHours_run_returnsListOfTenantSummaryResponses() {
@@ -284,7 +317,7 @@ class AccountControllerIntgTest {
         setCreatedByToPast(tenants)
 
         // Act & Assert
-        mockMvc.perform(get("/api/tenants/rentreceipts")
+        val andExpect = mockMvc.perform(get("/api/tenants/rentreceipts")
                 .param("hours", "1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .characterEncoding(Charsets.UTF_8.displayName()))
