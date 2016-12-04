@@ -19,7 +19,7 @@ open class MoneyDeserializer() : StdDeserializer<Money>(Money::class.java) {
         val moneyTree : JsonNode = jp.readValueAsTree()
         val amount = moneyTree.get("amount").asInt()
         val currencyNode = moneyTree.get("currency")
-        val currency = if (currencyNode == null) CurrencyUnit.USD else CurrencyUnit.of(currencyNode!!.asText())
+        val currency = if (currencyNode == null) CurrencyUnit.USD else CurrencyUnit.of(currencyNode.asText())
         return Money.ofMinor(currency, amount.toLong())
     }
 

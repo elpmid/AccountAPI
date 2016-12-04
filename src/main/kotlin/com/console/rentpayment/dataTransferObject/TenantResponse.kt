@@ -8,4 +8,8 @@ import java.time.LocalDateTime
  */
 class TenantResponse(id : Long? , val name : String,  val weeklyRentAmount : Money,  val rentDatePaidTo : LocalDateTime, val rentCreditAmount : Money,
                      createdBy : String, createdDate : LocalDateTime, lastModifiedBy : String, lastModifiedDate : LocalDateTime) :
-                     AbstractResponse( id, createdDate, lastModifiedDate,  createdBy, lastModifiedBy)
+                     AbstractResponse( id, createdDate, lastModifiedDate,  createdBy, lastModifiedBy) {
+    override fun toString(): String {
+        return "TenantResponse(name='$name', weeklyRentAmount=$weeklyRentAmount, rentDatePaidTo=$rentDatePaidTo, rentCreditAmount=$rentCreditAmount)"
+    }
+}

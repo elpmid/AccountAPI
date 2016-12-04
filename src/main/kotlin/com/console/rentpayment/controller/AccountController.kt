@@ -54,7 +54,7 @@ open class AccountController {
         if (tenant == null) {
             return ResponseEntity(HttpStatus.NOT_FOUND)
         }
-        if (tenant!!.name != tenantRequest.name) {
+        if (tenant.name != tenantRequest.name) {
             //check if name already in use
             if (tenantService.doesTenantExist(tenantRequest.name)) {
                 return ResponseEntity(HttpStatus.CONFLICT)

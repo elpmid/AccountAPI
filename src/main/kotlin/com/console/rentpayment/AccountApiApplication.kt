@@ -9,6 +9,10 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.joda.money.Money
+import org.springframework.aop.Advisor
+import org.springframework.aop.aspectj.AspectJExpressionPointcut
+import org.springframework.aop.interceptor.CustomizableTraceInterceptor
+import org.springframework.aop.support.DefaultPointcutAdvisor
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.context.annotation.Bean
@@ -17,6 +21,10 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+
+
+
+
 
 
 @SpringBootApplication
@@ -40,6 +48,25 @@ open class AccountApiApplication {
         builder.deserializerByType(Money::class.java, MoneyDeserializer())
         builder.serializerByType(Money::class.java, MoneySerializer())
         return builder
+    }
+
+
+    @Bean
+    open fun customizableTraceInterceptor(): CustomizableTraceInterceptor {
+        val cti = CustomizableTraceInterceptor()
+        cti.setEnterMessage("Entering method '$PLACEHOLDER_METHOD_NAME($PLACEHOLDER_ARGUMENTS)' of class [$PLACEHOLDER_TARGET_CLASS_NAME]")
+        cti.setExitMessage("Exiting method '" + PLACEHOLDER_METHOD_NAME + "' of class [" + PLACEHOLDER_TARGET_CLASS_NAME + "] returned '$PLACEHOLDER_RETURN_VALUE' took " + PLACEHOLDER_INVOCATION_TIME + "ms.")
+
+        return cti
+    }
+
+
+
+    @Bean
+    open fun traceAdvisor(): Advisor {
+        val pointcut = AspectJExpressionPointcut()
+        pointcut.expression = "execution(public * *(..)) && @annotation(com.console.rentpayment.logging.Loggable)"
+        return DefaultPointcutAdvisor(pointcut, customizableTraceInterceptor())
     }
 
 }
