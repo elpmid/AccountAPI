@@ -19,4 +19,10 @@ class TenantRequest() {
     lateinit  var weeklyRentAmount: Money
     lateinit  var rentDatePaidTo : LocalDateTime
     lateinit  var rentCreditAmount : Money
+
+    override fun toString(): String {
+        return "TenantRequest(name='$name', weeklyRentAmount=$weeklyRentAmount, rentDatePaidTo=$rentDatePaidTo, rentCreditAmount=$rentCreditAmount)"
+    }
+
+
 }

@@ -317,7 +317,7 @@ class AccountControllerIntgTest {
         setCreatedByToPast(tenants)
 
         // Act & Assert
-        val andExpect = mockMvc.perform(get("/api/tenants/rentreceipts")
+        mockMvc.perform(get("/api/tenants/rentreceipts")
                 .param("hours", "1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .characterEncoding(Charsets.UTF_8.displayName()))
@@ -333,7 +333,7 @@ class AccountControllerIntgTest {
         while (i <= tenants.size - 3) {
             var tenant: Tenant = tenants.get(i)
             tenant.rentReceipts.get(0).createdDate = LocalDateTime.now().minusMonths(2)
-            tenant = tenantRepository.save(tenant)
+            tenantRepository.save(tenant)
             i++
         }
     }

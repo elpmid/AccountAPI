@@ -4,7 +4,10 @@ import com.console.rentpayment.dataTransferObject.TenantRequest
 import com.console.rentpayment.dataTransferObject.TenantResponse
 import com.console.rentpayment.dataTransferObject.TenantSummaryResponse
 import com.console.rentpayment.domain.Tenant
+import com.console.rentpayment.logging.Loggable
+
 import com.console.rentpayment.repository.TenantRepository
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
@@ -16,6 +19,7 @@ import java.time.LocalDateTime
 @Service
 open class TenantServiceImpl : TenantService {
 
+    var logger = LoggerFactory.getLogger(TenantServiceImpl::class.java)
     @Autowired
     lateinit var tenantRepository : TenantRepository
 
@@ -43,6 +47,7 @@ open class TenantServiceImpl : TenantService {
 
 
     //Save a Tenant
+    @Loggable
     override fun saveTenant(tenantRequeast : TenantRequest) : TenantResponse {
         var tenant : Tenant = toTenant(tenantRequeast)
         tenant = tenantRepository.save(tenant)
