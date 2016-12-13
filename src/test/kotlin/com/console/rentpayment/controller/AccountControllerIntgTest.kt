@@ -60,6 +60,29 @@ class AccountControllerIntgTest {
 
     }
 
+
+    @Test
+    fun testDuplicateName() {
+        val tenantRequest : TenantRequest = TenantRequest(name = "NewTenant", weeklyRentAmount = Money.of(CurrencyUnit.of("AUD"), BigDecimal(500)),
+                rentDatePaidTo = LocalDateTime.now(), rentCreditAmount = Money.of(CurrencyUnit.of("AUD"), BigDecimal(50)))
+
+        // Act & Assert
+        mockMvc.perform(post("/api/tenants/")
+                .contentType(MediaType.APPLICATION_JSON)
+                .characterEncoding(Charsets.UTF_8.displayName())
+                .content(convertObjectToJsonBytes(tenantRequest)))
+                .andDo(print())
+
+        mockMvc.perform(post("/api/tenants/")
+                .contentType(MediaType.APPLICATION_JSON)
+                .characterEncoding(Charsets.UTF_8.displayName())
+                .content(convertObjectToJsonBytes(tenantRequest)))
+                .andDo(print())
+
+
+
+    }
+
     //Test Retrieving a Single Tenant by Id
     @Test
     fun getTenantById_run_returnsTenantResponse() {

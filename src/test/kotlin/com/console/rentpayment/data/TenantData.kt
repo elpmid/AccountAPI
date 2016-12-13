@@ -32,7 +32,7 @@ open class TenantData {
         var tenants : MutableList<Tenant> = ArrayList()
         var i : Int = 1
         while (i <= numberToCreate) {
-            var tenant =  Tenant("Tenant" + i, Money.of(CurrencyUnit.of("AUD"), BigDecimal(500)), LocalDateTime.now(),
+            var tenant =  Tenant("Tenant", Money.of(CurrencyUnit.of("AUD"), BigDecimal(500)), LocalDateTime.now(),
                                  Money.of(CurrencyUnit.of("AUD"), BigDecimal(50)))
             tenants.add(tenant)
             i++
