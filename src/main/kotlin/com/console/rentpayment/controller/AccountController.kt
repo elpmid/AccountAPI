@@ -12,11 +12,14 @@ import org.springframework.web.bind.annotation.*
 import javax.transaction.Transactional
 
 
+
+
 /**
  * Created by Nick on 14/11/2016.
  */
 
 @RestController
+@ControllerAdvice
 @RequestMapping(value = "/api/tenants", consumes = arrayOf(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8"), produces = arrayOf(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8"))
 open class AccountController {
 
@@ -40,9 +43,9 @@ open class AccountController {
     //Create a Tenant
     @RequestMapping(method = arrayOf(RequestMethod.POST))
     open fun createTenant(@RequestBody tenantRequest: TenantRequest) : ResponseEntity<TenantResponse> {
-        if (tenantService.doesTenantExist(tenantRequest.name)) {
-            return ResponseEntity(HttpStatus.CONFLICT)
-        }
+      //  if (tenantService.doesTenantExist(tenantRequest.name)) {
+      //      return ResponseEntity(HttpStatus.CONFLICT)
+      //  }
         return ResponseEntity(tenantService.saveTenant(tenantRequest), HttpStatus.OK)
     }
 
@@ -104,5 +107,8 @@ open class AccountController {
     open fun getTenantsWithRentReceiptsCreatedInLastNHours(@RequestParam("hours") hours : Long) : ResponseEntity<List<TenantSummaryResponse>> {
         return ResponseEntity(tenantService.getTenantsWithRentReceiptsCreateInLastNHours(hours), HttpStatus.OK)
     }
+
+
+
 
 }
