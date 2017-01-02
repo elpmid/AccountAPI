@@ -61,7 +61,15 @@ open class TenantServiceImpl : TenantService {
         tenant.weeklyRentAmount = tenantRequeast.weeklyRentAmount
         tenant.rentCreditAmount = tenantRequeast.rentCreditAmount
         tenant.rentDatePaidTo = tenantRequeast.rentDatePaidTo
-        val tenantUpdated : Tenant = tenantRepository.save(tenant)
+
+        var tenantCopy : Tenant = Tenant()
+        tenantCopy.id = 1
+        tenantCopy.name = "Copied Name"
+        tenantCopy.weeklyRentAmount = tenantRequeast.weeklyRentAmount
+        tenantCopy.rentCreditAmount = tenantRequeast.rentCreditAmount
+        tenantCopy.rentDatePaidTo = tenantRequeast.rentDatePaidTo
+
+        val tenantUpdated : Tenant = tenantRepository.save(tenantCopy)
         return toTenantResponse(tenantUpdated)
     }
 
