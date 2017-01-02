@@ -4,6 +4,8 @@ import com.console.rentpayment.dataTransferObject.TenantRequest
 import com.console.rentpayment.dataTransferObject.TenantResponse
 import com.console.rentpayment.dataTransferObject.TenantSummaryResponse
 import com.console.rentpayment.domain.Tenant
+import com.console.rentpayment.logging.Level
+import com.console.rentpayment.logging.LevelToProperties
 import com.console.rentpayment.logging.Loggable
 
 import com.console.rentpayment.repository.TenantRepository
@@ -47,7 +49,7 @@ open class TenantServiceImpl : TenantService {
 
 
     //Save a Tenant
-    @Loggable
+   // @Loggable
     override fun saveTenant(tenantRequeast : TenantRequest) : TenantResponse {
         var tenant : Tenant = toTenant(tenantRequeast)
         tenant = tenantRepository.save(tenant)
@@ -56,6 +58,7 @@ open class TenantServiceImpl : TenantService {
 
 
     //Update Tenant
+    @Loggable(levelsToProperties = arrayOf(LevelToProperties(level = Level.WARN, properties =  arrayOf("tenant.name")), LevelToProperties(level = Level.ERROR, properties =  arrayOf("tenant.name"))))
     override fun updateTenant(tenant : Tenant, tenantRequeast : TenantRequest) : TenantResponse {
         tenant.name = tenantRequeast.name
         tenant.weeklyRentAmount = tenantRequeast.weeklyRentAmount
