@@ -4,7 +4,6 @@ import com.console.rentpayment.dataTransferObject.TenantRequest
 import com.console.rentpayment.dataTransferObject.TenantResponse
 import com.console.rentpayment.dataTransferObject.TenantSummaryResponse
 import com.console.rentpayment.domain.Tenant
-import com.console.rentpayment.logging.Loggable
 
 
 /**
@@ -18,7 +17,6 @@ interface TenantService {
 
     fun doesTenantExist(tenantName : String): Boolean
 
-    @Loggable
     fun saveTenant(tenantRequeast : TenantRequest) : TenantResponse
 
     fun updateTenant(tenant : Tenant, tenantRequeast : TenantRequest) : TenantResponse
