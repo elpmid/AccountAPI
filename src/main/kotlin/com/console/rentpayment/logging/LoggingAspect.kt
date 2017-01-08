@@ -128,25 +128,12 @@ open class LoggingAspect() : CustomizableTraceInterceptor() {
         this.exceptionMessage = exceptionMessage
     }
 
-    /**
-     * Checks to see if the supplied `String` has any placeholders
-     * that are not specified as constants on this class and throws an
-     * `IllegalArgumentException` if so.
-     */
-    @Throws(IllegalArgumentException::class)
-    private fun checkForInvalidPlaceholders(message: String) {
-        val matcher = PATTERN.matcher(message)
-        while (matcher.find()) {
-            val match = matcher.group()
-            if (!ALLOWED_PLACEHOLDERS.contains(match)) {
-                throw IllegalArgumentException("Placeholder [$match] is not valid")
-            }
-        }
-    }
+
 
     private val elParser: ExpressionParser = SpelExpressionParser()
 
     companion object {
+        //TODO replace with list??
         val LOGGER_LOG_LEVEL_TO_INCLUDED_LOG_LEVELS: Map<LogLevel, List<LogLevel>> =
             hashMapOf(LogLevel.TRACE to listOf<LogLevel>(LogLevel.TRACE, LogLevel.DEBUG, LogLevel.INFO, LogLevel.WARN, LogLevel.ERROR, LogLevel.FATAL),
                       LogLevel.DEBUG to listOf<LogLevel>(LogLevel.DEBUG, LogLevel.INFO, LogLevel.WARN, LogLevel.ERROR, LogLevel.FATAL),
@@ -273,7 +260,6 @@ open class LoggingAspect() : CustomizableTraceInterceptor() {
         return output.toString()
     }
 
-
     /**
      * Writes the supplied message and [Throwable] to the
      * supplied `Log` instance.
@@ -290,7 +276,6 @@ open class LoggingAspect() : CustomizableTraceInterceptor() {
         }
     }
 
-
     /*
      * Get the names of the properties we want to log from the annotation
      */
@@ -303,18 +288,14 @@ open class LoggingAspect() : CustomizableTraceInterceptor() {
      */
     private fun getArgumentsAndValues(returnValue: Any?, method: Method, arguments: Array<Any>, propertyNamesFromAnnotation: List<String>, propertyNamePredicate: (String) -> Boolean) : String {
 
-        val evaluationContext: EvaluationContext = if (returnValue != null)MethodBasedEvaluationContext(returnValue, method, arguments, DefaultParameterNameDiscoverer()) else
-                                                                           MethodBasedEvaluationContext(returnValue, method, arguments, DefaultParameterNameDiscoverer())
+        val evaluationContext: EvaluationContext = MethodBasedEvaluationContext(returnValue, method, arguments, DefaultParameterNameDiscoverer())
 
         if (returnValue != null) {
             evaluationContext.setVariable("result", returnValue)
-
         }
+
         return propertyNamesFromAnnotation.filter(propertyNamePredicate).map { element -> element + ":" + evaluateExpression(element, evaluationContext) }.joinToString(",")
     }
-
-
-
 
     /*
      * create and evaluate the expression
@@ -365,6 +346,30 @@ open class LoggingAspect() : CustomizableTraceInterceptor() {
         else if (logger.isErrorEnabled) return LogLevel.ERROR
         else return LogLevel.FATAL // logger.isFatalEnabled
     }
+
+
+
+    /*
+      *Spring (non overridden) functions copied from CustomizableTraceInterceptor
+     */
+
+
+    /**
+     * Checks to see if the supplied `String` has any placeholders
+     * that are not specified as constants on this class and throws an
+     * `IllegalArgumentException` if so.
+     */
+    @Throws(IllegalArgumentException::class)
+    private fun checkForInvalidPlaceholders(message: String) {
+        val matcher = PATTERN.matcher(message)
+        while (matcher.find()) {
+            val match = matcher.group()
+            if (!ALLOWED_PLACEHOLDERS.contains(match)) {
+                throw IllegalArgumentException("Placeholder [$match] is not valid")
+            }
+        }
+    }
+
 
     /**
      * Adds a comma-separated list of the short `Class` names of the
