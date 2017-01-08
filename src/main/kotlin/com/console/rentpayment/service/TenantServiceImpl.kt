@@ -7,10 +7,10 @@ import com.console.rentpayment.domain.Tenant
 import com.console.rentpayment.logging.LogLevel
 import com.console.rentpayment.logging.LogLevelToProperties
 import com.console.rentpayment.logging.Loggable
-
 import com.console.rentpayment.repository.TenantRepository
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 
@@ -27,6 +27,7 @@ open class TenantServiceImpl : TenantService {
 
 
     //Get Tenant by Id
+    @Cacheable(unless="#result == null" )
     override fun findTenantById(tenantId : Long) : TenantResponse? {
         var tenant : Tenant? = tenantRepository.findOne(tenantId)
         if (tenant == null) {
@@ -59,7 +60,7 @@ open class TenantServiceImpl : TenantService {
 
     //Update Tenant
     @Loggable(levelsToPropertyLogs = arrayOf(LogLevelToProperties(logLevel = LogLevel.TRACE, properties =  arrayOf("tenantRequest.name","tenantRequest.mainContact")),
-                                            LogLevelToProperties(logLevel = LogLevel.INFO, properties =  arrayOf("id")),
+                                            LogLevelToProperties(logLevel = LogLevel.INFO, properties =  arrayOf("#tenantRequest.name", "#result.id")),
                                             LogLevelToProperties(logLevel = LogLevel.WARN, properties =  arrayOf("tenantRequest.name")),
                                             LogLevelToProperties(logLevel = LogLevel.ERROR, properties =  arrayOf("#tenantRequest.name"))))
     override fun updateTenant(tenant : Tenant, tenantRequest: TenantRequest) : TenantResponse {

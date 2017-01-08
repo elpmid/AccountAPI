@@ -16,6 +16,7 @@ import org.springframework.aop.interceptor.CustomizableTraceInterceptor.*
 import org.springframework.aop.support.DefaultPointcutAdvisor
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.cache.annotation.EnableCaching
 import org.springframework.context.annotation.Bean
 import org.springframework.data.domain.AuditorAware
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing
@@ -30,6 +31,7 @@ import java.time.format.DateTimeFormatter
 
 @SpringBootApplication
 @EnableJpaAuditing
+@EnableCaching
 open class AccountApiApplication {
 
     @Bean

@@ -253,8 +253,8 @@ open class LoggingAspect() : CustomizableTraceInterceptor() {
                 val shortName = ClassUtils.getShortName(getClassForLogging(methodInvocation.`this`))
                 matcher.appendReplacement(output, Matcher.quoteReplacement(shortName))
             } else if (PLACEHOLDER_ARGUMENTS == match) {
-             //   matcher.appendReplacement(output, getArgumentsAndValues(returnValue, methodInvocation.method, methodInvocation.arguments,
-             //                             propertyNamesFromAnnotation, { !it.startsWith("#result") } ))
+               matcher.appendReplacement(output, getArgumentsAndValues(returnValue, methodInvocation.method, methodInvocation.arguments,
+                                          propertyNamesFromAnnotation, { !it.startsWith("#result") } ))
             } else if (PLACEHOLDER_ARGUMENT_TYPES == match) {
                 appendArgumentTypes(methodInvocation, matcher, output)
             } else if (PLACEHOLDER_RETURN_VALUE == match) {
@@ -299,13 +299,18 @@ open class LoggingAspect() : CustomizableTraceInterceptor() {
     }
 
     /*
-     * For each property defined on the annotation. If the property is NOT a return property (i.e. #result) then return its names and value seperated by a ,
+     * For each property defined on the annotation filtered by the predicate return its value seperated by a comma
      */
     private fun getArgumentsAndValues(returnValue: Any?, method: Method, arguments: Array<Any>, propertyNamesFromAnnotation: List<String>, propertyNamePredicate: (String) -> Boolean) : String {
-        val evaluationContext: EvaluationContext = MethodBasedEvaluationContext(returnValue, method, arguments, DefaultParameterNameDiscoverer())
 
-        return propertyNamesFromAnnotation.filter(propertyNamePredicate).map { element -> element + ":" + evaluateExpression(element, evaluationContext,
-            ) }.joinToString(",")
+        val evaluationContext: EvaluationContext = if (returnValue != null)MethodBasedEvaluationContext(returnValue, method, arguments, DefaultParameterNameDiscoverer()) else
+                                                                           MethodBasedEvaluationContext(returnValue, method, arguments, DefaultParameterNameDiscoverer())
+
+        if (returnValue != null) {
+            evaluationContext.setVariable("result", returnValue)
+
+        }
+        return propertyNamesFromAnnotation.filter(propertyNamePredicate).map { element -> element + ":" + evaluateExpression(element, evaluationContext) }.joinToString(",")
     }
 
 
@@ -314,7 +319,7 @@ open class LoggingAspect() : CustomizableTraceInterceptor() {
     /*
      * create and evaluate the expression
      */
-    private fun evaluateExpression(expressionString: String, evaluationContext: EvaluationContext, returnValue: Any?) : String {
+    private fun evaluateExpression(expressionString: String, evaluationContext: EvaluationContext) : String {
         val expression = elParser.parseExpression(expressionString)
         return expression.getValue(evaluationContext, String::class.java)
     }
