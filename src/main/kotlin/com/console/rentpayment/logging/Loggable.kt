@@ -7,7 +7,7 @@ package com.console.rentpayment.logging
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION)
 annotation class Loggable (
-    val levelsToProperties: Array<LevelToProperties>
+    val levelsToPropertyLogs: Array<LogLevelToProperties> = arrayOf()
 )
 
 

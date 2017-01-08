@@ -4,8 +4,8 @@ import com.console.rentpayment.dataTransferObject.TenantRequest
 import com.console.rentpayment.dataTransferObject.TenantResponse
 import com.console.rentpayment.dataTransferObject.TenantSummaryResponse
 import com.console.rentpayment.domain.Tenant
-import com.console.rentpayment.logging.Level
-import com.console.rentpayment.logging.LevelToProperties
+import com.console.rentpayment.logging.LogLevel
+import com.console.rentpayment.logging.LogLevelToProperties
 import com.console.rentpayment.logging.Loggable
 
 import com.console.rentpayment.repository.TenantRepository
@@ -49,7 +49,7 @@ open class TenantServiceImpl : TenantService {
 
 
     //Save a Tenant
-   // @Loggable
+    @Loggable()
     override fun saveTenant(tenantRequeast : TenantRequest) : TenantResponse {
         var tenant : Tenant = toTenant(tenantRequeast)
         tenant = tenantRepository.save(tenant)
@@ -58,21 +58,23 @@ open class TenantServiceImpl : TenantService {
 
 
     //Update Tenant
-    @Loggable(levelsToProperties = arrayOf(LevelToProperties(level = Level.WARN, properties =  arrayOf("tenant.name")), LevelToProperties(level = Level.ERROR, properties =  arrayOf("tenant.name"))))
-    override fun updateTenant(tenant : Tenant, tenantRequeast : TenantRequest) : TenantResponse {
-        tenant.name = tenantRequeast.name
-        tenant.weeklyRentAmount = tenantRequeast.weeklyRentAmount
-        tenant.rentCreditAmount = tenantRequeast.rentCreditAmount
-        tenant.rentDatePaidTo = tenantRequeast.rentDatePaidTo
+    @Loggable(levelsToPropertyLogs = arrayOf(LogLevelToProperties(logLevel = LogLevel.TRACE, properties =  arrayOf("tenantRequest.name","tenantRequest.mainContact")),
+                                            LogLevelToProperties(logLevel = LogLevel.INFO, properties =  arrayOf("id")),
+                                            LogLevelToProperties(logLevel = LogLevel.WARN, properties =  arrayOf("tenantRequest.name")),
+                                            LogLevelToProperties(logLevel = LogLevel.ERROR, properties =  arrayOf("#tenantRequest.name"))))
+    override fun updateTenant(tenant : Tenant, tenantRequest: TenantRequest) : TenantResponse {
+        tenant.name = tenantRequest.name
+        tenant.weeklyRentAmount = tenantRequest.weeklyRentAmount
+        tenant.rentCreditAmount = tenantRequest.rentCreditAmount
+        tenant.rentDatePaidTo = tenantRequest.rentDatePaidTo
 
-        var tenantCopy : Tenant = Tenant()
-        tenantCopy.id = 1
-        tenantCopy.name = "Copied Name"
-        tenantCopy.weeklyRentAmount = tenantRequeast.weeklyRentAmount
-        tenantCopy.rentCreditAmount = tenantRequeast.rentCreditAmount
-        tenantCopy.rentDatePaidTo = tenantRequeast.rentDatePaidTo
+      //  var tenantCopy : Tenant = Tenant()
+      //  tenantCopy.name = tenantRequest.name
+      //  tenantCopy.weeklyRentAmount = tenantRequest.weeklyRentAmount
+      //  tenantCopy.rentCreditAmount = tenantRequest.rentCreditAmount
+      //  tenantCopy.rentDatePaidTo = tenantRequest.rentDatePaidTo
 
-        val tenantUpdated : Tenant = tenantRepository.save(tenantCopy)
+        val tenantUpdated : Tenant = tenantRepository.save(tenant)
         return toTenantResponse(tenantUpdated)
     }
 

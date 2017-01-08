@@ -37,7 +37,6 @@ open class AccountApiApplication {
         return AuditorAwareImpl()
     }
 
-
     @Bean
     open fun objectMapperBuilder(): Jackson2ObjectMapperBuilder {
         val builder = Jackson2ObjectMapperBuilder()
@@ -51,22 +50,19 @@ open class AccountApiApplication {
         return builder
     }
 
-
     @Bean
-    open fun customizableTraceInterceptor(): LoggingAspect {
-        val cti = LoggingAspect()
+    open fun loggingInterceptor(): LoggingAspect {
+        val cti: LoggingAspect = LoggingAspect()
         cti.setEnterMessage("Entering method '$PLACEHOLDER_METHOD_NAME($PLACEHOLDER_ARGUMENTS)' of class [$PLACEHOLDER_TARGET_CLASS_NAME]")
         cti.setExitMessage("Exiting method '" + PLACEHOLDER_METHOD_NAME + "' of class [" + PLACEHOLDER_TARGET_CLASS_NAME + "] returned '$PLACEHOLDER_RETURN_VALUE' took " + PLACEHOLDER_INVOCATION_TIME + "ms.")
         return cti
     }
 
-
-
     @Bean
-    open fun traceAdvisor(): Advisor {
+    open fun loggingAdvisor(): Advisor {
         val pointcut = AspectJExpressionPointcut()
         pointcut.expression = "execution(public * *(..)) && @annotation(com.console.rentpayment.logging.Loggable)"
-        return DefaultPointcutAdvisor(pointcut, customizableTraceInterceptor())
+        return DefaultPointcutAdvisor(pointcut, loggingInterceptor())
     }
 
 }

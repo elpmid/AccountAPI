@@ -19,7 +19,7 @@ interface TenantService {
 
     fun saveTenant(tenantRequeast : TenantRequest) : TenantResponse
 
-    fun updateTenant(tenant : Tenant, tenantRequeast : TenantRequest) : TenantResponse
+    fun updateTenant(tenant : Tenant, tenantRequest: TenantRequest) : TenantResponse
 
     fun deleteTenantById(tenantId : Long)
 

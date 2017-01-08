@@ -3,7 +3,13 @@ package com.console.rentpayment.logging
 import org.aopalliance.intercept.MethodInvocation
 import org.apache.commons.logging.Log
 import org.springframework.aop.interceptor.CustomizableTraceInterceptor
+import org.springframework.cache.annotation.Cacheable
+import org.springframework.context.expression.MethodBasedEvaluationContext
 import org.springframework.core.Constants
+import org.springframework.core.DefaultParameterNameDiscoverer
+import org.springframework.expression.EvaluationContext
+import org.springframework.expression.ExpressionParser
+import org.springframework.expression.spel.standard.SpelExpressionParser
 import org.springframework.util.Assert
 import org.springframework.util.ClassUtils
 import org.springframework.util.StopWatch
@@ -20,88 +26,27 @@ import java.util.regex.Pattern
 open class LoggingAspect() : CustomizableTraceInterceptor() {
 
     /**
-     * The `$[methodName]` placeholder.
-     * Replaced with the name of the method being invoked.
-     */
-    val PLACEHOLDER_METHOD_NAME = "$[methodName]"
-
-    /**
-     * The `$[targetClassName]` placeholder.
-     * Replaced with the fully-qualifed name of the `Class`
-     * of the method invocation target.
-     */
-    val PLACEHOLDER_TARGET_CLASS_NAME = "$[targetClassName]"
-
-    /**
-     * The `$[targetClassShortName]` placeholder.
-     * Replaced with the short name of the `Class` of the
-     * method invocation target.
-     */
-    val PLACEHOLDER_TARGET_CLASS_SHORT_NAME = "$[targetClassShortName]"
-
-    /**
-     * The `$[returnValue]` placeholder.
-     * Replaced with the `String` representation of the value
-     * returned by the method invocation.
-     */
-    val PLACEHOLDER_RETURN_VALUE = "$[returnValue]"
-
-    /**
-     * The `$[argumentTypes]` placeholder.
-     * Replaced with a comma-separated list of the argument types for the
-     * method invocation. Argument types are written as short class names.
-     */
-    val PLACEHOLDER_ARGUMENT_TYPES = "$[argumentTypes]"
-
-    /**
-     * The `$[arguments]` placeholder.
-     * Replaced with a comma separated list of the argument values for the
-     * method invocation. Relies on the `toString()` method of
-     * each argument type.
-     */
-    val PLACEHOLDER_ARGUMENTS = "$[arguments]"
-
-    /**
-     * The `$[exception]` placeholder.
-     * Replaced with the `String` representation of any
-     * `Throwable` raised during method invocation.
-     */
-    val PLACEHOLDER_EXCEPTION = "$[exception]"
-
-    /**
-     * The `$[invocationTime]` placeholder.
-     * Replaced with the time taken by the invocation (in milliseconds).
-     */
-    val PLACEHOLDER_INVOCATION_TIME = "$[invocationTime]"
-
-    /**
-     * The default message used for writing method entry messages.
-     */
-    private val DEFAULT_ENTER_MESSAGE =
-            "Entering method '$PLACEHOLDER_METHOD_NAME' of class [$PLACEHOLDER_TARGET_CLASS_NAME]"
-
-    /**
-     * The default message used for writing method exit messages.
-     */
-    private val DEFAULT_EXIT_MESSAGE =
-            "Exiting method '$PLACEHOLDER_METHOD_NAME' of class [$PLACEHOLDER_TARGET_CLASS_NAME]"
-
-    /**
-     * The default message used for writing exception messages.
-     */
-    private val DEFAULT_EXCEPTION_MESSAGE =
-            "Exception thrown in method '$PLACEHOLDER_METHOD_NAME' of class [$PLACEHOLDER_TARGET_CLASS_NAME]"
-
-    /**
      * The `Pattern` used to match placeholders.
      */
     private val PATTERN = Pattern.compile("\\$\\[\\p{Alpha}+\\]")
 
     /**
-     * The `Set` of allowed placeholders.
+     * The default message used for writing method entry messages.
      */
-    private val ALLOWED_PLACEHOLDERS = Constants(CustomizableTraceInterceptor::class.java).getValues("PLACEHOLDER_")
+    private val DEFAULT_ENTER_MESSAGE =
+        "Entering method '$PLACEHOLDER_METHOD_NAME' of class [$PLACEHOLDER_TARGET_CLASS_NAME]"
 
+    /**
+     * The default message used for writing method exit messages.
+     */
+    private val DEFAULT_EXIT_MESSAGE =
+        "Exiting method '$PLACEHOLDER_METHOD_NAME' of class [$PLACEHOLDER_TARGET_CLASS_NAME]"
+
+    /**
+     * The default message used for writing exception messages.
+     */
+    private val DEFAULT_EXCEPTION_MESSAGE =
+        "Exception thrown in method '$PLACEHOLDER_METHOD_NAME' of class [$PLACEHOLDER_TARGET_CLASS_NAME]"
 
     /**
      * The message for method entry.
@@ -129,15 +74,16 @@ open class LoggingAspect() : CustomizableTraceInterceptor() {
      *  * `$[arguments]`
      *
      */
+
     override fun setEnterMessage(enterMessage: String) {
         Assert.hasText(enterMessage, "'enterMessage' must not be empty")
         checkForInvalidPlaceholders(enterMessage)
         Assert.doesNotContain(enterMessage, PLACEHOLDER_RETURN_VALUE,
-                "enterMessage cannot contain placeholder [$PLACEHOLDER_RETURN_VALUE]")
+            "enterMessage cannot contain placeholder [$PLACEHOLDER_RETURN_VALUE]")
         Assert.doesNotContain(enterMessage, PLACEHOLDER_EXCEPTION,
-                "enterMessage cannot contain placeholder [$PLACEHOLDER_EXCEPTION]")
+            "enterMessage cannot contain placeholder [$PLACEHOLDER_EXCEPTION]")
         Assert.doesNotContain(enterMessage, PLACEHOLDER_INVOCATION_TIME,
-                "enterMessage cannot contain placeholder [$PLACEHOLDER_INVOCATION_TIME]")
+            "enterMessage cannot contain placeholder [$PLACEHOLDER_INVOCATION_TIME]")
         this.enterMessage = enterMessage
     }
 
@@ -157,10 +103,9 @@ open class LoggingAspect() : CustomizableTraceInterceptor() {
         Assert.hasText(exitMessage, "'exitMessage' must not be empty")
         checkForInvalidPlaceholders(exitMessage)
         Assert.doesNotContain(exitMessage, PLACEHOLDER_EXCEPTION,
-                "exitMessage cannot contain placeholder [$PLACEHOLDER_EXCEPTION]")
+            "exitMessage cannot contain placeholder [$PLACEHOLDER_EXCEPTION]")
         this.exitMessage = exitMessage
     }
-
 
     /**
      * Set the template used for method exception log messages.
@@ -177,29 +122,55 @@ open class LoggingAspect() : CustomizableTraceInterceptor() {
         Assert.hasText(exceptionMessage, "'exceptionMessage' must not be empty")
         checkForInvalidPlaceholders(exceptionMessage)
         Assert.doesNotContain(exceptionMessage, PLACEHOLDER_RETURN_VALUE,
-                "exceptionMessage cannot contain placeholder [$PLACEHOLDER_RETURN_VALUE]")
+            "exceptionMessage cannot contain placeholder [$PLACEHOLDER_RETURN_VALUE]")
         Assert.doesNotContain(exceptionMessage, PLACEHOLDER_INVOCATION_TIME,
-                "exceptionMessage cannot contain placeholder [$PLACEHOLDER_INVOCATION_TIME]")
+            "exceptionMessage cannot contain placeholder [$PLACEHOLDER_INVOCATION_TIME]")
         this.exceptionMessage = exceptionMessage
     }
 
-    override fun writeToLog(logger: Log, message: String, ex: Throwable?) {
-        if (ex != null) {
-            logger.info(message, ex)
-        } else {
-            logger.info(message)
+    /**
+     * Checks to see if the supplied `String` has any placeholders
+     * that are not specified as constants on this class and throws an
+     * `IllegalArgumentException` if so.
+     */
+    @Throws(IllegalArgumentException::class)
+    private fun checkForInvalidPlaceholders(message: String) {
+        val matcher = PATTERN.matcher(message)
+        while (matcher.find()) {
+            val match = matcher.group()
+            if (!ALLOWED_PLACEHOLDERS.contains(match)) {
+                throw IllegalArgumentException("Placeholder [$match] is not valid")
+            }
         }
     }
 
-    override fun isInterceptorEnabled(methodInvocation: MethodInvocation, logger: Log): Boolean {
+    private val elParser: ExpressionParser = SpelExpressionParser()
 
+    companion object {
+        val LOGGER_LOG_LEVEL_TO_INCLUDED_LOG_LEVELS: Map<LogLevel, List<LogLevel>> =
+            hashMapOf(LogLevel.TRACE to listOf<LogLevel>(LogLevel.TRACE, LogLevel.DEBUG, LogLevel.INFO, LogLevel.WARN, LogLevel.ERROR, LogLevel.FATAL),
+                      LogLevel.DEBUG to listOf<LogLevel>(LogLevel.DEBUG, LogLevel.INFO, LogLevel.WARN, LogLevel.ERROR, LogLevel.FATAL),
+                      LogLevel.INFO to listOf<LogLevel>(LogLevel.INFO, LogLevel.WARN, LogLevel.ERROR, LogLevel.FATAL),
+                      LogLevel.WARN to listOf<LogLevel>(LogLevel.WARN, LogLevel.ERROR, LogLevel.FATAL),
+                      LogLevel.ERROR to listOf<LogLevel>(LogLevel.ERROR, LogLevel.FATAL),
+                      LogLevel.FATAL to listOf<LogLevel>(LogLevel.FATAL))
+
+        /**
+         * The `Set` of allowed placeholders.
+         */
+        val ALLOWED_PLACEHOLDERS = Constants(CustomizableTraceInterceptor::class.java).getValues("PLACEHOLDER_")
+    }
+
+
+    /**
+     * The interceptor is enabled if the @Loggable annotation is on the method
+     */
+    override fun isInterceptorEnabled(methodInvocation: MethodInvocation, logger: Log): Boolean {
         val method : Method = methodInvocation.method
         if (method.isAnnotationPresent(Loggable::class.java)) {
             return true
-
         }
         return false
-
     }
 
 
@@ -219,23 +190,28 @@ open class LoggingAspect() : CustomizableTraceInterceptor() {
         val stopWatch = StopWatch(name)
         var returnValue: Any? = null
         var exitThroughException = false
+        val method: Method = invocation.method
+        val loggableAnnotation: Loggable = method.getAnnotation(Loggable::class.java)
+        val logLevelsToProperties: Array<LogLevelToProperties> = loggableAnnotation.levelsToPropertyLogs
+        val levelToLogAt: LogLevel = determineLevelToLogAt(invocation, logLevelsToProperties)
+        val propertyNamesFromAnnotation: List<String> = getPropertyNamesFromAnnotation(levelToLogAt, logLevelsToProperties)
         try {
-            writeToLog(logger,
-                    replacePlaceholders(logger, this.enterMessage, invocation, null, null, -1))
+            stopWatch.start(name)
+            writeToLog(logger, replacePlaceholders(enterMessage, invocation, null, null, -1, propertyNamesFromAnnotation), null, levelToLogAt)
             returnValue = invocation.proceed()
             return returnValue
         } catch (ex: Throwable) {
+            if (stopWatch.isRunning) stopWatch.stop()
             exitThroughException = true
-            writeToLog(logger, replacePlaceholders(logger, this.exceptionMessage, invocation, null, ex, stopWatch.totalTimeMillis), ex)
+            writeToLog(logger, replacePlaceholders(exceptionMessage, invocation, null, ex, stopWatch.totalTimeMillis, propertyNamesFromAnnotation), ex, levelToLogAt)
             throw ex
         } finally {
             if (!exitThroughException) {
-                writeToLog(logger, replacePlaceholders(logger, this.exitMessage, invocation, returnValue, null, stopWatch.totalTimeMillis))
+                if (stopWatch.isRunning) stopWatch.stop()
+                writeToLog(logger, replacePlaceholders(exitMessage, invocation, returnValue, null, stopWatch.totalTimeMillis, propertyNamesFromAnnotation), null, levelToLogAt)
             }
         }
     }
-
-
 
     /**
      * Replace the placeholders in the given message with the supplied values,
@@ -258,8 +234,10 @@ open class LoggingAspect() : CustomizableTraceInterceptor() {
      * *
      * @return the formatted output to write to the log
      */
-     fun replacePlaceholders(logger: Log, message: String, methodInvocation: MethodInvocation,
-                                     returnValue: Any?, throwable: Throwable?, invocationTime: Long): String {
+    @Cacheable
+     fun replacePlaceholders(message: String, methodInvocation: MethodInvocation,
+                                     returnValue: Any?, throwable: Throwable?, invocationTime: Long,
+                                     propertyNamesFromAnnotation: List<String>): String {
 
         val matcher = PATTERN.matcher(message)
 
@@ -275,26 +253,13 @@ open class LoggingAspect() : CustomizableTraceInterceptor() {
                 val shortName = ClassUtils.getShortName(getClassForLogging(methodInvocation.`this`))
                 matcher.appendReplacement(output, Matcher.quoteReplacement(shortName))
             } else if (PLACEHOLDER_ARGUMENTS == match) {
-
-                val method : Method = methodInvocation.method
-                if (method.isAnnotationPresent(Loggable::class.java)) {
-                    val loggableAnnotation : Loggable = method.getAnnotation(Loggable::class.java)
-                    if (loggableAnnotation.levelsToProperties.isNotEmpty()) {
-
-                        val annotationLevels : List<Level> = loggableAnnotation.levelsToProperties.map { it.level }
-                        val levelToLogAt : Level = determineLevelToLogAt(determineLoggerLowestLevel(logger), annotationLevels)
-                     //   val out : String = getPropertiesForLevel(levelToLogAt, loggableAnnotation.levelsToProperties)
-                    } else {
-                        matcher.appendReplacement(output,
-                                Matcher.quoteReplacement(StringUtils.arrayToCommaDelimitedString(methodInvocation.arguments)))
-                    }
-                }
-
-
+             //   matcher.appendReplacement(output, getArgumentsAndValues(returnValue, methodInvocation.method, methodInvocation.arguments,
+             //                             propertyNamesFromAnnotation, { !it.startsWith("#result") } ))
             } else if (PLACEHOLDER_ARGUMENT_TYPES == match) {
                 appendArgumentTypes(methodInvocation, matcher, output)
             } else if (PLACEHOLDER_RETURN_VALUE == match) {
-                appendReturnValue(methodInvocation, matcher, output, returnValue)
+                matcher.appendReplacement(output, getArgumentsAndValues(returnValue, methodInvocation.method, methodInvocation.arguments,
+                                          propertyNamesFromAnnotation, { it.startsWith("#result") } ))
             } else if (throwable != null && PLACEHOLDER_EXCEPTION == match) {
                 matcher.appendReplacement(output, Matcher.quoteReplacement(throwable.toString()))
             } else if (PLACEHOLDER_INVOCATION_TIME == match) {
@@ -305,90 +270,95 @@ open class LoggingAspect() : CustomizableTraceInterceptor() {
             }
         }
         matcher.appendTail(output)
-
         return output.toString()
     }
 
 
-    fun determineLoggerLowestLevel(logger: Log) : Level {
-        if (logger.isTraceEnabled)
-            return Level.TRACE
-        else if (logger.isDebugEnabled)
-            return Level.DEBUG
-        else if (logger.isInfoEnabled)
-            return Level.INFO
-        else if (logger.isWarnEnabled)
-            return Level.WARN
-        else if (logger.isErrorEnabled)
-            return Level.ERROR
-        else // logger.isFatalEnabled
-            return Level.FATAL
-
+    /**
+     * Writes the supplied message and [Throwable] to the
+     * supplied `Log` instance.
+     */
+     private fun writeToLog(logger: Log, message: String, ex: Throwable?, levelToLogAt: LogLevel) {
+        when(levelToLogAt) {
+            LogLevel.TRACE -> if (ex != null) logger.trace(message, ex) else logger.trace(message)
+            LogLevel.DEBUG -> if (ex != null) logger.debug(message, ex) else logger.debug(message)
+            LogLevel.INFO -> if (ex != null) logger.info(message, ex) else logger.info(message)
+            LogLevel.WARN -> if (ex != null) logger.warn(message, ex) else logger.warn(message)
+            LogLevel.ERROR -> if (ex != null) logger.error(message, ex) else logger.error(message)
+            LogLevel.FATAL -> if (ex != null) logger.fatal(message, ex) else logger.fatal(message)
+            LogLevel.NO_LEVEL -> {} //NOOP
+        }
     }
 
 
-    fun getPropertiesForLevel(level: Level, levelToProperties: LevelToProperties) : String {
+    /*
+     * Get the names of the properties we want to log from the annotation
+     */
+    private fun getPropertyNamesFromAnnotation(logLevel: LogLevel, logLevelsToProperty: Array<LogLevelToProperties>) : List<String> {
+        return logLevelsToProperty.filter { it.logLevel == logLevel  }.first().properties.toList()
+    }
 
+    /*
+     * For each property defined on the annotation. If the property is NOT a return property (i.e. #result) then return its names and value seperated by a ,
+     */
+    private fun getArgumentsAndValues(returnValue: Any?, method: Method, arguments: Array<Any>, propertyNamesFromAnnotation: List<String>, propertyNamePredicate: (String) -> Boolean) : String {
+        val evaluationContext: EvaluationContext = MethodBasedEvaluationContext(returnValue, method, arguments, DefaultParameterNameDiscoverer())
 
-
-            return ""
+        return propertyNamesFromAnnotation.filter(propertyNamePredicate).map { element -> element + ":" + evaluateExpression(element, evaluationContext,
+            ) }.joinToString(",")
     }
 
 
-    fun determineLevelToLogAt(loggerLowestLevel : Level, annotationLevels : List<Level>) : Level {
-
-        val allowedLevels : Map<Level, List<Level>> = hashMapOf(Level.TRACE to listOf<Level>(Level.TRACE, Level.DEBUG, Level.INFO, Level.WARN, Level.ERROR, Level.FATAL),
-                                                                Level.DEBUG to listOf<Level>(Level.DEBUG, Level.INFO, Level.WARN, Level.ERROR, Level.FATAL),
-                                                                Level.INFO to listOf<Level>(Level.INFO, Level.WARN, Level.ERROR, Level.FATAL),
-                                                                Level.WARN to listOf<Level>(Level.WARN, Level.ERROR, Level.FATAL),
-                                                                Level.ERROR to listOf<Level>(Level.ERROR, Level.FATAL),
-                                                                Level.FATAL to listOf<Level>(Level.FATAL))
-
-        val allowedLevelsForLowestLevel: List<Level>? = allowedLevels[loggerLowestLevel]
-
-        val annotationAllowedLevels: List<Level> = annotationLevels.filter { isInAllowedLevels(it, allowedLevelsForLowestLevel!!)}
 
 
-        var min: Int = Level.OFF.level
-        for (level in annotationAllowedLevels)
-            min = Math.min(level.level, min);
-
-
-        val lowestAnnotationAllowedLevel : Level =   if (min == Integer.MIN_VALUE) Level.OFF else Level.values()[min]
-
-        return lowestAnnotationAllowedLevel
-
+    /*
+     * create and evaluate the expression
+     */
+    private fun evaluateExpression(expressionString: String, evaluationContext: EvaluationContext, returnValue: Any?) : String {
+        val expression = elParser.parseExpression(expressionString)
+        return expression.getValue(evaluationContext, String::class.java)
     }
 
-    private fun isInAllowedLevels(level: Level, allowedLevelsForLowestLevel: List<Level>) : Boolean {
-        return allowedLevelsForLowestLevel!!.contains(level)
-    }
+    /*
+    * The logLevel to log at will be the lowest log logLevel in the annotation list applicable to the log lowest logLevel of the logger
+    * Example: The logger is set at logLevel INFO - This means it can log INFO, WARN, ERROR and FATAL
+    *          The annotation has the following log levels: TRACE, WARN, ERROR
+    * So the allowed logging levels for this logger on the annotation are WARN and ERROR. We will pick the lowest logLevel WARN
+    *
+    * If there are no allowed logging levels the we won't log anything
+    * Example: The logger is set to FATAL - This means it can only log FATAL
+    *          The annotation has the following log levels: TRACE, WARN, ERROR
+    * So there are no allowed logging levels, so we don't log anything
+    *
+     */
+    private fun determineLevelToLogAt(methodInvocation: MethodInvocation, logLevelsToProperties: Array<LogLevelToProperties>) : LogLevel {
+        val logger: Log = getLoggerForInvocation(methodInvocation)
+        //The log level the logger is logging set to
+        val loggerLoggingLevel : LogLevel = determineLoggerLoggingLevel(logger)
+        //The log levels applicable to the above e.g. if set to INFO then INFO, WARN, ERROR and FATAL
+        val loggerLogLevels: List<LogLevel> = LoggingAspect.LOGGER_LOG_LEVEL_TO_INCLUDED_LOG_LEVELS[loggerLoggingLevel]!!
+        //The log levels specified on the annotation
+        val annotationLogLevels: List<LogLevel> = logLevelsToProperties.map { it.logLevel }
+        //All the log levels specified on the annotation in the log levels applicable to the log level the logger is set to - could be none
+        val allowedLogLogLevels: List<LogLevel> = annotationLogLevels.filter { loggerLogLevels.contains(it) }
 
+        if (allowedLogLogLevels.isNotEmpty()) {
+            return allowedLogLogLevels.min()!!
+        }
+        return LogLevel.NO_LEVEL
+    }
 
     /**
-     * Adds the `String` representation of the method return value
-     * to the supplied `StringBuffer`. Correctly handles
-     * `null` and `void` results.
-     * @param methodInvocation the `MethodInvocation` that returned the value
-     * *
-     * @param matcher the `Matcher` containing the matched placeholder
-     * *
-     * @param output the `StringBuffer` to write output to
-     * *
-     * @param returnValue the value returned by the method invocation.
+     * Get the logging level the logger is set to. This will be the lowest level
+     * of the levels enabled on the logger
      */
-    private fun appendReturnValue(methodInvocation: MethodInvocation, matcher: Matcher, output: StringBuffer, returnValue: Any?) {
-        //super<CustomizableTraceInterceptor>.
-
-
-
-        if (methodInvocation.method.returnType == Void.TYPE) {
-            matcher.appendReplacement(output, "void")
-        } else if (returnValue == null) {
-            matcher.appendReplacement(output, "null")
-        } else {
-            matcher.appendReplacement(output, Matcher.quoteReplacement(returnValue.toString()))
-        }
+    private fun determineLoggerLoggingLevel(logger: Log) : LogLevel {
+        if (logger.isTraceEnabled) return LogLevel.TRACE
+        else if (logger.isDebugEnabled) return LogLevel.DEBUG
+        else if (logger.isInfoEnabled) return LogLevel.INFO
+        else if (logger.isWarnEnabled) return LogLevel.WARN
+        else if (logger.isErrorEnabled) return LogLevel.ERROR
+        else return LogLevel.FATAL // logger.isFatalEnabled
     }
 
     /**
@@ -410,24 +380,6 @@ open class LoggingAspect() : CustomizableTraceInterceptor() {
             argumentTypeShortNames[i] = ClassUtils.getShortName(argumentTypes[i])
         }
         matcher.appendReplacement(output,
-                Matcher.quoteReplacement(StringUtils.arrayToCommaDelimitedString(argumentTypeShortNames)))
+            Matcher.quoteReplacement(StringUtils.arrayToCommaDelimitedString(argumentTypeShortNames)))
     }
-
-    /**
-     * Checks to see if the supplied `String` has any placeholders
-     * that are not specified as constants on this class and throws an
-     * `IllegalArgumentException` if so.
-     */
-    @Throws(IllegalArgumentException::class)
-    private fun checkForInvalidPlaceholders(message: String) {
-        val matcher = PATTERN.matcher(message)
-        while (matcher.find()) {
-            val match = matcher.group()
-            if (!ALLOWED_PLACEHOLDERS.contains(match)) {
-                throw IllegalArgumentException("Placeholder [$match] is not valid")
-            }
-        }
-    }
-
-
 }
