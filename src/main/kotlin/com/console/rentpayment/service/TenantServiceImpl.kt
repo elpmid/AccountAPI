@@ -7,6 +7,7 @@ import com.console.rentpayment.domain.Tenant
 import com.console.rentpayment.logging.LogLevel
 import com.console.rentpayment.logging.LogLevelToProperties
 import com.console.rentpayment.logging.Loggable
+import com.console.rentpayment.logging.Loggable2
 import com.console.rentpayment.repository.TenantRepository
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -59,21 +60,14 @@ open class TenantServiceImpl : TenantService {
 
 
     //Update Tenant
-    @Loggable(levelsToPropertyLogs = arrayOf(LogLevelToProperties(logLevel = LogLevel.TRACE, properties =  arrayOf("tenantRequest.name","tenantRequest.mainContact")),
-                                            LogLevelToProperties(logLevel = LogLevel.INFO, properties =  arrayOf("#tenantRequest.name", "#result.id")),
-                                            LogLevelToProperties(logLevel = LogLevel.WARN, properties =  arrayOf("tenantRequest.name")),
-                                            LogLevelToProperties(logLevel = LogLevel.ERROR, properties =  arrayOf("#tenantRequest.name"))))
+
+    @Loggable2(debugProperties = arrayOf("#tenant.name", "#tenantRequest.name", "#result.id"),
+               errorProperties = arrayOf("#tenant","#tenant.name", "#result.id"))
     override fun updateTenant(tenant : Tenant, tenantRequest: TenantRequest) : TenantResponse {
         tenant.name = tenantRequest.name
         tenant.weeklyRentAmount = tenantRequest.weeklyRentAmount
         tenant.rentCreditAmount = tenantRequest.rentCreditAmount
         tenant.rentDatePaidTo = tenantRequest.rentDatePaidTo
-
-      //  var tenantCopy : Tenant = Tenant()
-      //  tenantCopy.name = tenantRequest.name
-      //  tenantCopy.weeklyRentAmount = tenantRequest.weeklyRentAmount
-      //  tenantCopy.rentCreditAmount = tenantRequest.rentCreditAmount
-      //  tenantCopy.rentDatePaidTo = tenantRequest.rentDatePaidTo
 
         val tenantUpdated : Tenant = tenantRepository.save(tenant)
         return toTenantResponse(tenantUpdated)

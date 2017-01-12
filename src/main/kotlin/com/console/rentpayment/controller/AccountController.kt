@@ -53,17 +53,17 @@ open class AccountController {
     //Update a Tenant
     @RequestMapping(value = "/{id}", method = arrayOf(RequestMethod.PUT))
     open fun updateTenant(@PathVariable("id") tenantId : Long,  @RequestBody tenantRequest: TenantRequest) : ResponseEntity<TenantResponse> {
-//        val tenant : Tenant? = tenantService.findTenantByIdDomain(tenantId)
-//        if (tenant == null) {
-//            return ResponseEntity(HttpStatus.NOT_FOUND)
-//        }
-//        if (tenant.name != tenantRequest.name) {
-//            //check if name already in use
-//            if (tenantService.doesTenantExist(tenantRequest.name)) {
-//                return ResponseEntity(HttpStatus.CONFLICT)
-//            }
-//        }
-        val tenant : Tenant = Tenant()
+        val tenant : Tenant? = tenantService.findTenantByIdDomain(tenantId)
+        if (tenant == null) {
+            return ResponseEntity(HttpStatus.NOT_FOUND)
+        }
+        if (tenant.name != tenantRequest.name) {
+            //check if name already in use
+            if (tenantService.doesTenantExist(tenantRequest.name)) {
+                return ResponseEntity(HttpStatus.CONFLICT)
+            }
+        }
+
         return ResponseEntity(tenantService.updateTenant(tenant, tenantRequest), HttpStatus.OK)
     }
 

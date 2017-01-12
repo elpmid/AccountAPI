@@ -40,5 +40,9 @@ open class Tenant() : AbstractEntity() {
     @JoinColumn(name="TENANT_ID", nullable=true)
     var rentReceipts: MutableList<RentReceipt> = ArrayList()
 
+    override fun toString(): String {
+        return "Tenant(name='$name', weeklyRentAmount=$weeklyRentAmount, rentDatePaidTo=$rentDatePaidTo, rentCreditAmount=$rentCreditAmount, rentReceipts=$rentReceipts)"
+    }
+
 
 }
