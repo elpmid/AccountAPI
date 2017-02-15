@@ -20,6 +20,7 @@ import org.springframework.cache.annotation.EnableCaching
 import org.springframework.context.annotation.Bean
 import org.springframework.data.domain.AuditorAware
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -32,6 +33,7 @@ import java.time.format.DateTimeFormatter
 @SpringBootApplication
 @EnableJpaAuditing
 @EnableCaching
+@EnableJpaRepositories(repositoryBaseClass = SimpleJpaEntityGraphRepositoryImpl::class)
 open class AccountApiApplication {
 
     @Bean

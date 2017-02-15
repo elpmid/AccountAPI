@@ -6,6 +6,7 @@ import com.console.rentpayment.dataTransferObject.TenantRequest
 import com.console.rentpayment.domain.Tenant
 import com.console.rentpayment.repository.RentReceiptRepository
 import com.console.rentpayment.repository.TenantRepository
+import com.console.rentpayment.service.PaymentService
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.hamcrest.MatcherAssert.assertThat
@@ -53,6 +54,9 @@ class AccountControllerIntgTest {
     lateinit  var tenantData : TenantData
 
     @Autowired
+    lateinit  var paymentService : PaymentService
+
+    @Autowired
     lateinit var objectMapper : ObjectMapper
 
     @Before
@@ -60,6 +64,11 @@ class AccountControllerIntgTest {
 
     }
 
+
+    @Test
+    fun testPaymentService() {
+        paymentService.savePayment()
+    }
 
     @Test
     fun testDuplicateName() {
