@@ -3,6 +3,7 @@ package com.console.rentpayment
 import com.console.rentpayment.dataTransferObject.MoneyDeserializer
 import com.console.rentpayment.dataTransferObject.MoneySerializer
 import com.console.rentpayment.logging.LoggingAspect
+import com.console.rentpayment.logging.LoggingAspect2
 import com.example.domain.AuditorAwareImpl
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.SerializationFeature
@@ -54,19 +55,37 @@ open class AccountApiApplication {
         return builder
     }
 
+//    @Bean
+//    open fun loggingInterceptor() : LoggingAspect {
+//        val cti: LoggingAspect = LoggingAspect()
+//        cti.setUseDynamicLogger(true)
+//        cti.setEnterMessage("Entering method '$PLACEHOLDER_METHOD_NAME($PLACEHOLDER_ARGUMENTS)' of class [$PLACEHOLDER_TARGET_CLASS_NAME]")
+//        cti.setExitMessage("Exiting method '" + PLACEHOLDER_METHOD_NAME + "' of class [" + PLACEHOLDER_TARGET_CLASS_NAME + "] returned '$PLACEHOLDER_RETURN_VALUE' took " + PLACEHOLDER_INVOCATION_TIME + "ms.")
+//        return cti
+//    }
+//
+//    @Bean
+//    open fun loggingAdvisor() : Advisor {
+//        val pointcut = AspectJExpressionPointcut()
+//        pointcut.expression = "execution(public * *(..)) && @annotation(com.console.rentpayment.logging.Loggable)"
+//        return DefaultPointcutAdvisor(pointcut, loggingInterceptor())
+//    }
+
     @Bean
-    open fun loggingInterceptor(): LoggingAspect {
-        val cti: LoggingAspect = LoggingAspect()
+    open fun loggingInterceptor2(): LoggingAspect2 {
+        val cti: LoggingAspect2 = LoggingAspect2()
+        cti.setUseDynamicLogger(true)
         cti.setEnterMessage("Entering method '$PLACEHOLDER_METHOD_NAME($PLACEHOLDER_ARGUMENTS)' of class [$PLACEHOLDER_TARGET_CLASS_NAME]")
         cti.setExitMessage("Exiting method '" + PLACEHOLDER_METHOD_NAME + "' of class [" + PLACEHOLDER_TARGET_CLASS_NAME + "] returned '$PLACEHOLDER_RETURN_VALUE' took " + PLACEHOLDER_INVOCATION_TIME + "ms.")
         return cti
     }
 
+
     @Bean
-    open fun loggingAdvisor(): Advisor {
+    open fun loggingAdvisor2() : Advisor {
         val pointcut = AspectJExpressionPointcut()
-        pointcut.expression = "execution(public * *(..)) && @annotation(com.console.rentpayment.logging.Loggable)"
-        return DefaultPointcutAdvisor(pointcut, loggingInterceptor())
+        pointcut.expression = "execution(public * *(..)) && @annotation(com.console.rentpayment.logging.Loggable2)"
+        return DefaultPointcutAdvisor(pointcut, loggingInterceptor2())
     }
 
 }

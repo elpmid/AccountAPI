@@ -24,6 +24,8 @@ import java.util.regex.Matcher
  class LoggingAspectA() {
     private val logger : Logger = LoggerFactory.getLogger(LoggingAspectA::class.java)
 
+
+
     @Pointcut("execution(public * *(..))")
     fun publicMethod() {
     }

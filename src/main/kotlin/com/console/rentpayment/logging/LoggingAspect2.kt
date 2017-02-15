@@ -24,7 +24,7 @@ import java.util.regex.Pattern
  * Created by Nick on 2/01/2017.
  */
 
-open class LoggingAspect() : CustomizableTraceInterceptor() {
+open class LoggingAspect2() : CustomizableTraceInterceptor() {
 
     /**
      * The `Pattern` used to match placeholders.
@@ -129,7 +129,6 @@ open class LoggingAspect() : CustomizableTraceInterceptor() {
         this.exceptionMessage = exceptionMessage
     }
 
-
     private val elParser: ExpressionParser = SpelExpressionParser()
 
     companion object {
@@ -153,7 +152,7 @@ open class LoggingAspect() : CustomizableTraceInterceptor() {
      */
     override fun isInterceptorEnabled(methodInvocation: MethodInvocation, logger: Log): Boolean {
         val method : Method = methodInvocation.method
-        if (method.isAnnotationPresent(Loggable::class.java)) {
+        if (method.isAnnotationPresent(Loggable2::class.java)) {
             return true
         }
         return false
@@ -170,36 +169,44 @@ open class LoggingAspect() : CustomizableTraceInterceptor() {
 
      * @see .setExceptionMessage
      */
-    override fun invokeUnderTrace(invocation: MethodInvocation, logger: Log): Any {
+    override fun invokeUnderTrace(invocation: MethodInvocation, logger: Log): Any? {
         val name = ClassUtils.getQualifiedMethodName(invocation.method)
         val stopWatch = StopWatch(name)
         var returnValue: Any? = null
         var exitThroughException = false
         val method: Method = invocation.method
-        val loggableAnnotation: Loggable = method.getAnnotation(Loggable::class.java)
-        val logLevelsToProperties: Array<LogLevelToProperties> = loggableAnnotation.levelsToPropertyLogs
-        val levelToLogAt: LogLevel = determineLevelToLogAt(invocation, logLevelsToProperties)
-        val propertyNamesFromAnnotation: List<String> = getPropertyNamesFromAnnotation(levelToLogAt, logLevelsToProperties)
+        val loggableAnnotation: Loggable2 = method.getAnnotation(Loggable2::class.java)
+        val logLevelsFromAnnotation: List<LogLevel> = getLogLevelsFromAnnotation(loggableAnnotation)
+        val loggableAnnotationOnly = logLevelsFromAnnotation.isEmpty()
+        val loggerLogLevel: LogLevel = determineLoggerLoggingLevel(logger)
+        val levelToLogAt: LogLevel = if (loggableAnnotationOnly) loggerLogLevel else determineLevelToLogAt(invocation, logLevelsFromAnnotation, loggerLogLevel)
+        val propertyNamesFromAnnotationForLogLevel: List<String> = getPropertyNamesFromAnnotationForLogLevel(loggableAnnotation, levelToLogAt)
         try {
             stopWatch.start(name)
-            writeToLog(logger, replacePlaceholders(enterMessage, invocation, null, null, -1, propertyNamesFromAnnotation, levelToLogAt), null, levelToLogAt)
+            if (loggableAnnotationOnly) //There are no arguments specified on the @Loggable annotation - log at the logger level - no arguments or returned values logged
+                writeToLog(logger, replacePlaceholders(enterMessage, invocation, null, null, -1, null, loggerLogLevel), null, loggerLogLevel)
+            else
+                writeToLog(logger, replacePlaceholders(enterMessage, invocation, null, null, -1, propertyNamesFromAnnotationForLogLevel, levelToLogAt), null, levelToLogAt)
             returnValue = invocation.proceed()
             return returnValue
         } catch (ex: Throwable) {
             if (stopWatch.isRunning) stopWatch.stop()
             exitThroughException = true
-            writeToLog(logger, replacePlaceholders(exceptionMessage, invocation, null, ex, stopWatch.totalTimeMillis, propertyNamesFromAnnotation, levelToLogAt), ex, levelToLogAt)
+            if (loggableAnnotationOnly) //There are no arguments specified on the @Loggable annotation - log at the logger level - no arguments or returned values logged
+                writeToLog(logger, replacePlaceholders(exceptionMessage, invocation, null, ex, stopWatch.totalTimeMillis, null, loggerLogLevel), ex, loggerLogLevel)
+            else
+                writeToLog(logger, replacePlaceholders(exceptionMessage, invocation, null, ex, stopWatch.totalTimeMillis, propertyNamesFromAnnotationForLogLevel, levelToLogAt), ex, levelToLogAt)
             throw ex
         } finally {
             if (!exitThroughException) {
                 if (stopWatch.isRunning) stopWatch.stop()
-                writeToLog(logger, replacePlaceholders(exitMessage, invocation, returnValue, null, stopWatch.totalTimeMillis, propertyNamesFromAnnotation, levelToLogAt), null, levelToLogAt)
+                    if (loggableAnnotationOnly) //There are no arguments specified on the @Loggable annotation - log at the logger level - no arguments or returned values logged
+                        writeToLog(logger, replacePlaceholders(exitMessage, invocation, returnValue, null, stopWatch.totalTimeMillis, null, loggerLogLevel), null, loggerLogLevel)
+                    else
+                        writeToLog(logger, replacePlaceholders(exitMessage, invocation, returnValue, null, stopWatch.totalTimeMillis, propertyNamesFromAnnotationForLogLevel, levelToLogAt), null, levelToLogAt)
             }
         }
     }
-
-
-
 
     /**
      * Replace the placeholders in the given message with the supplied values,
@@ -222,9 +229,9 @@ open class LoggingAspect() : CustomizableTraceInterceptor() {
      * *
      * @return the formatted output to write to the log
      */
-     fun replacePlaceholders(message: String, methodInvocation: MethodInvocation,
+     private fun replacePlaceholders(message: String, methodInvocation: MethodInvocation,
                                      returnValue: Any?, throwable: Throwable?, invocationTime: Long,
-                                     propertyNamesFromAnnotation: List<String>, levelToLogAt: LogLevel): String {
+                                     propertyNamesFromAnnotation: List<String>?, levelToLogAt: LogLevel): String {
 
         val matcher = PATTERN.matcher(message)
 
@@ -240,13 +247,19 @@ open class LoggingAspect() : CustomizableTraceInterceptor() {
                 val shortName = ClassUtils.getShortName(getClassForLogging(methodInvocation.`this`))
                 matcher.appendReplacement(output, Matcher.quoteReplacement(shortName))
             } else if (PLACEHOLDER_ARGUMENTS == match) {
-                   matcher.appendReplacement(output, getArgumentsAndValues(returnValue, methodInvocation.method, methodInvocation.arguments,
-                       propertyNamesFromAnnotation, { !it.startsWith("#result") }, levelToLogAt))
+                    if (propertyNamesFromAnnotation != null)
+                        matcher.appendReplacement(output, getArgumentsAndValues(returnValue, methodInvocation.method, methodInvocation.arguments,
+                                                  propertyNamesFromAnnotation, { !it.startsWith("#result") }, levelToLogAt))
+                    else
+                        matcher.appendReplacement(output,"")
             } else if (PLACEHOLDER_ARGUMENT_TYPES == match) {
                 appendArgumentTypes(methodInvocation, matcher, output)
             } else if (PLACEHOLDER_RETURN_VALUE == match) {
-                matcher.appendReplacement(output, getArgumentsAndValues(returnValue, methodInvocation.method, methodInvocation.arguments,
-                                          propertyNamesFromAnnotation, { it.startsWith("#result") } , levelToLogAt))
+                if (propertyNamesFromAnnotation != null && returnValue != null)
+                    matcher.appendReplacement(output, getArgumentsAndValues(returnValue, methodInvocation.method, methodInvocation.arguments,
+                                              propertyNamesFromAnnotation, { it.startsWith("#result") } , levelToLogAt))
+                else
+                    matcher.appendReplacement(output,"")
             } else if (throwable != null && PLACEHOLDER_EXCEPTION == match) {
                 matcher.appendReplacement(output, Matcher.quoteReplacement(throwable.toString()))
             } else if (PLACEHOLDER_INVOCATION_TIME == match) {
@@ -258,6 +271,33 @@ open class LoggingAspect() : CustomizableTraceInterceptor() {
         }
         matcher.appendTail(output)
         return output.toString()
+    }
+
+    /*
+     * Get the log levels defined on the annotation
+     */
+    private fun getLogLevelsFromAnnotation(loggableAnnotation: Loggable2) : List<LogLevel> {
+        val logLevels: MutableList<LogLevel> = mutableListOf()
+        if (!loggableAnnotation.debugProperties.first().equals(LoggableNull.NULL)) logLevels.add(LogLevel.DEBUG)
+        if (!loggableAnnotation.infoProperties.first().equals(LoggableNull.NULL)) logLevels.add(LogLevel.INFO)
+        if (!loggableAnnotation.warnProperties.first().equals(LoggableNull.NULL)) logLevels.add(LogLevel.WARN)
+        if (!loggableAnnotation.errorProperties.first().equals(LoggableNull.NULL)) logLevels.add(LogLevel.ERROR)
+        if (!loggableAnnotation.fatalProperties.first().equals(LoggableNull.NULL)) logLevels.add(LogLevel.FATAL)
+        return logLevels
+    }
+
+    /*
+     *  Get the names of the properties we want to log from the annotation
+     */
+    private fun getPropertyNamesFromAnnotationForLogLevel(loggableAnnotation: Loggable2, levelToLogAt: LogLevel) : List<String> {
+        return when(levelToLogAt) {
+            LogLevel.DEBUG ->  loggableAnnotation.debugProperties.toList()
+            LogLevel.INFO -> loggableAnnotation.infoProperties.toList()
+            LogLevel.WARN -> loggableAnnotation.warnProperties.toList()
+            LogLevel.ERROR -> loggableAnnotation.errorProperties.toList()
+            LogLevel.FATAL -> loggableAnnotation.fatalProperties.toList()
+            else -> emptyList()
+        }
     }
 
     /**
@@ -277,13 +317,6 @@ open class LoggingAspect() : CustomizableTraceInterceptor() {
     }
 
     /*
-     * Get the names of the properties we want to log from the annotation
-     */
-    private fun getPropertyNamesFromAnnotation(logLevel: LogLevel, logLevelsToProperty: Array<LogLevelToProperties>) : List<String> {
-        return logLevelsToProperty.filter { it.logLevel == logLevel  }.first().properties.toList()
-    }
-
-    /*
      * For each property defined on the annotation filtered by the predicate return its value seperated by a comma
      */
     private fun getArgumentsAndValues(returnValue: Any?, method: Method, arguments: Array<Any>, propertyNamesFromAnnotation: List<String>,
@@ -292,48 +325,41 @@ open class LoggingAspect() : CustomizableTraceInterceptor() {
         if (returnValue != null) {
             evaluationContext.setVariable("result", returnValue)
         }
-        return propertyNamesFromAnnotation.filter(propertyNamePredicate).map { element -> element +  "=" + evaluateExpression(element, evaluationContext, arguments) }.joinToString(",")
+        return propertyNamesFromAnnotation.filter(propertyNamePredicate).map { element -> element +  "=" + evaluateExpression(element, evaluationContext, arguments) }.joinToString(", ")
     }
 
-    /*
-     * create and evaluate the expression
+    /**
+     * Create and evaluate the expression
      */
     private fun evaluateExpression(expressionString: String, evaluationContext: EvaluationContext, arguments: Array<Any>) : String {
-        //Does the annotation specify an object?
-        if (!expressionString.contains(".")) {
-            //Get the argument that matches the object
-         //   var argument = arguments.filter { it. }
-            return Matcher.quoteReplacement(StringUtils.arrayToCommaDelimitedString(arguments))
-        }
         val expression: Expression = elParser.parseExpression(expressionString)
         val typeDescriptor: TypeDescriptor = expression.getValueTypeDescriptor(evaluationContext)
-        val value = expression.getValue(evaluationContext, String::class.java)
-        if (typeDescriptor.type.name == "java.lang.String") return "'$value'"
-        return  value
+        val value = expression.getValue(evaluationContext, typeDescriptor.type)
+        if (typeDescriptor.type.name == "java.lang.String")
+            return "'$value'"
+        return value.toString()
     }
 
-    /*
-    * The logLevel to log at will be the lowest log logLevel in the annotation list applicable to the log lowest logLevel of the logger
-    * Example: The logger is set at logLevel INFO - This means it can log INFO, WARN, ERROR and FATAL
-    *          The annotation has the following log levels: TRACE, WARN, ERROR
-    * So the allowed logging levels for this logger on the annotation are WARN and ERROR. We will pick the lowest logLevel WARN
-    *
-    * If there are no allowed logging levels the we won't log anything
-    * Example: The logger is set to FATAL - This means it can only log FATAL
-    *          The annotation has the following log levels: TRACE, WARN, ERROR
-    * So there are no allowed logging levels, so we don't log anything
-    *
+    /**
+     * The logLevel to log at will be the lowest log logLevel in the annotation list applicable to the log lowest logLevel of the logger
+     * Example: The logger is set at logLevel INFO - This means it can log INFO, WARN, ERROR and FATAL
+     *          The annotation has the following log levels: TRACE, WARN, ERROR
+     * So the allowed logging levels for this logger on the annotation are WARN and ERROR. We will pick the lowest logLevel WARN
+     *
+     * If there are no allowed logging levels the we won't log anything
+     * Example: The logger is set to FATAL - This means it can only log FATAL
+     *          The annotation has the following log levels: TRACE, WARN, ERROR
+     * So there are no allowed logging levels, so we don't log anything
+     *
      */
-    private fun determineLevelToLogAt(methodInvocation: MethodInvocation, logLevelsToProperties: Array<LogLevelToProperties>) : LogLevel {
+    private fun determineLevelToLogAt(methodInvocation: MethodInvocation, logLevelsFromAnotation: List<LogLevel>, loggerLogLevel: LogLevel) : LogLevel {
         val logger: Log = getLoggerForInvocation(methodInvocation)
         //The log level the logger is logging set to
-        val loggerLoggingLevel : LogLevel = determineLoggerLoggingLevel(logger)
+        val loggerLoggingLevel : LogLevel = loggerLogLevel
         //The log levels applicable to the above e.g. if set to INFO then INFO, WARN, ERROR and FATAL
         val loggerLogLevels: List<LogLevel> = LoggingAspect.LOGGER_LOG_LEVEL_TO_INCLUDED_LOG_LEVELS[loggerLoggingLevel]!!
-        //The log levels specified on the annotation
-        val annotationLogLevels: List<LogLevel> = logLevelsToProperties.map { it.logLevel }
         //All the log levels specified on the annotation in the log levels applicable to the log level the logger is set to - could be none
-        val allowedLogLogLevels: List<LogLevel> = annotationLogLevels.filter { loggerLogLevels.contains(it) }
+        val allowedLogLogLevels: List<LogLevel> = logLevelsFromAnotation.filter { loggerLogLevels.contains(it) }
 
         if (allowedLogLogLevels.isNotEmpty()) {
             return allowedLogLogLevels.min()!!
@@ -355,8 +381,7 @@ open class LoggingAspect() : CustomizableTraceInterceptor() {
     }
 
 
-
-    /*
+    /**
      * Spring (non overridden) functions copied from CustomizableTraceInterceptor
      */
 
@@ -376,7 +401,6 @@ open class LoggingAspect() : CustomizableTraceInterceptor() {
             }
         }
     }
-
 
     /**
      * Adds a comma-separated list of the short `Class` names of the
@@ -400,4 +424,3 @@ open class LoggingAspect() : CustomizableTraceInterceptor() {
             Matcher.quoteReplacement(StringUtils.arrayToCommaDelimitedString(argumentTypeShortNames)))
     }
 }
-
