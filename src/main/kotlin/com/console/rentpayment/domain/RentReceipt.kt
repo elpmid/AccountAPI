@@ -1,6 +1,5 @@
 package com.console.rentpayment.domain
 
-import com.example.domain.AbstractEntity
 import org.joda.money.Money
 import javax.persistence.Column
 import javax.persistence.Entity

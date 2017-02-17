@@ -26,14 +26,16 @@ data class PaymentItemEntity(
         val invoiceNumber: String? = null,
 
         @OneToMany(cascade = arrayOf(CascadeType.ALL), fetch = FetchType.LAZY)
-        @JoinTable(name = "vw_payment_item_transaction", joinColumns = arrayOf(JoinColumn(name = "payment_item_id")), inverseJoinColumns = arrayOf(JoinColumn(name = "transaction_id")))
-        val transactions: MutableSet<TransactionEntity>
+        @JoinTable(name = "vw_payment_item_transaction", joinColumns = arrayOf(JoinColumn(name = "payment_item_id")),
+                inverseJoinColumns = arrayOf(JoinColumn(
+                        name = "transaction_id")))
+        val transactionEntities: MutableSet<TransactionEntity>
 ) {
 
     /**
      * Default constructor for Hibernate.
      */
     private constructor() : this(
-            transactions = mutableSetOf<TransactionEntity>()
+            transactionEntities = mutableSetOf<TransactionEntity>()
     )
 }

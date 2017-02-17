@@ -23,7 +23,7 @@ interface TenantService {
 
     fun deleteTenantById(tenantId : Long)
 
-    fun getTenantsWithRentReceiptsCreateInLastNHours(hours : Long) : List<TenantSummaryResponse>
+   // fun getTenantsWithRentReceiptsCreateInLastNHours(hours : Long) : List<TenantSummaryResponse>
 
 }
 

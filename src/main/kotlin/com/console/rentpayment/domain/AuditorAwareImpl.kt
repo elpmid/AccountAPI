@@ -1,4 +1,4 @@
-package com.example.domain
+package com.console.rentpayment.domain
 
 import org.springframework.data.domain.AuditorAware
 

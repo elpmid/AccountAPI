@@ -1,7 +1,9 @@
 package com.console.rentpayment.controller
 
 import com.console.rentpayment.dataTransferObject.*
+import com.console.rentpayment.domain.PaymentEntity
 import com.console.rentpayment.domain.Tenant
+import com.console.rentpayment.service.PaymentService
 import com.console.rentpayment.service.RentReceiptService
 import com.console.rentpayment.service.TenantService
 import org.springframework.beans.factory.annotation.Autowired
@@ -25,9 +27,18 @@ open class AccountController {
 
     @Autowired
     open lateinit var tenantService : TenantService
+    @Autowired
+    open lateinit var paymentService : PaymentService
 
     @Autowired
     open lateinit var rentReceiptService : RentReceiptService
+
+
+    @RequestMapping(value = "/test", method = arrayOf(RequestMethod.GET))
+    open  fun test() : ResponseEntity<PaymentEntity> {
+        val paymentEntity = paymentService.savePayment()
+        return ResponseEntity(paymentEntity, HttpStatus.OK)
+    }
 
     //Retrieve Single Tenant by Id
     @RequestMapping(value = "/{id}", method = arrayOf(RequestMethod.GET))
@@ -104,10 +115,10 @@ open class AccountController {
 
 
     //Get all tenants who have a Rent Receipt created in the last N hours
-    @RequestMapping(value = "/rentreceipts", method = arrayOf(RequestMethod.GET))
-    open fun getTenantsWithRentReceiptsCreatedInLastNHours(@RequestParam("hours") hours : Long) : ResponseEntity<List<TenantSummaryResponse>> {
-        return ResponseEntity(tenantService.getTenantsWithRentReceiptsCreateInLastNHours(hours), HttpStatus.OK)
-    }
+//    @RequestMapping(value = "/rentreceipts", method = arrayOf(RequestMethod.GET))
+//    open fun getTenantsWithRentReceiptsCreatedInLastNHours(@RequestParam("hours") hours : Long) : ResponseEntity<List<TenantSummaryResponse>> {
+//        return ResponseEntity(tenantService.getTenantsWithRentReceiptsCreateInLastNHours(hours), HttpStatus.OK)
+//    }
 
 
 

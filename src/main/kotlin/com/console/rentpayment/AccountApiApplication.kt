@@ -2,19 +2,13 @@ package com.console.rentpayment
 
 import com.console.rentpayment.dataTransferObject.MoneyDeserializer
 import com.console.rentpayment.dataTransferObject.MoneySerializer
-import com.console.rentpayment.logging.LoggingAspect
-import com.console.rentpayment.logging.LoggingAspect2
-import com.example.domain.AuditorAwareImpl
+import com.console.rentpayment.domain.AuditorAwareImpl
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.joda.money.Money
-import org.springframework.aop.Advisor
-import org.springframework.aop.aspectj.AspectJExpressionPointcut
-import org.springframework.aop.interceptor.CustomizableTraceInterceptor.*
-import org.springframework.aop.support.DefaultPointcutAdvisor
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.cache.annotation.EnableCaching
@@ -71,22 +65,8 @@ open class AccountApiApplication {
 //        return DefaultPointcutAdvisor(pointcut, loggingInterceptor())
 //    }
 
-    @Bean
-    open fun loggingInterceptor2(): LoggingAspect2 {
-        val cti: LoggingAspect2 = LoggingAspect2()
-        cti.setUseDynamicLogger(true)
-        cti.setEnterMessage("Entering method '$PLACEHOLDER_METHOD_NAME($PLACEHOLDER_ARGUMENTS)' of class [$PLACEHOLDER_TARGET_CLASS_NAME]")
-        cti.setExitMessage("Exiting method '" + PLACEHOLDER_METHOD_NAME + "' of class [" + PLACEHOLDER_TARGET_CLASS_NAME + "] returned '$PLACEHOLDER_RETURN_VALUE' took " + PLACEHOLDER_INVOCATION_TIME + "ms.")
-        return cti
-    }
 
 
-    @Bean
-    open fun loggingAdvisor2() : Advisor {
-        val pointcut = AspectJExpressionPointcut()
-        pointcut.expression = "execution(public * *(..)) && @annotation(com.console.rentpayment.logging.Loggable2)"
-        return DefaultPointcutAdvisor(pointcut, loggingInterceptor2())
-    }
 
 }
 

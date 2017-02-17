@@ -7,15 +7,69 @@ package com.console.rentpayment.domain
 
 
 
-import org.hibernate.annotations.Generated
-import org.hibernate.annotations.GenerationTime
+import com.console.rentpayment.domain.PaymentEntityGraphs.EAGER_PAYMENT_ITEMS_TRANSACTION_TRANSACTION_DETAIL_PAYMENT_DETAIL_PAYMENT_REVERSED
+import com.console.rentpayment.domain.PaymentEntityGraphs.EAGER_TRANSACTION
+import org.springframework.data.jpa.domain.Specifications
+import au.com.console.jpaspecificationdsl.*
+import com.console.rentpayment.domain.PaymentEntityGraphs.EAGER_PAYMENT_ITEMS_PAYMENT_DETAIL
 import java.time.LocalDate
-import java.time.LocalDateTime
-import javax.persistence.*
+import javax.persistence.CascadeType
+import javax.persistence.Column
+import javax.persistence.Entity
+import javax.persistence.EnumType
+import javax.persistence.Enumerated
+import javax.persistence.FetchType
+import javax.persistence.GeneratedValue
+import javax.persistence.GenerationType
+import javax.persistence.Id
+import javax.persistence.JoinColumn
+import javax.persistence.NamedAttributeNode
+import javax.persistence.NamedEntityGraph
+import javax.persistence.NamedEntityGraphs
+import javax.persistence.NamedSubgraph
+import javax.persistence.OneToMany
+import javax.persistence.OneToOne
+import javax.persistence.PrimaryKeyJoinColumn
+import javax.persistence.Table
 
-/**
- * @author Alan Loi (alan.loi@console.com.au)
- */
+object PaymentEntityGraphs {
+        const val EAGER_PAYMENT_ITEMS_TRANSACTION_TRANSACTION_DETAIL_PAYMENT_DETAIL_PAYMENT_REVERSED = "PaymentEntity.eager.paymentItemEntities.transactionEntities." +
+                "transactionDetailEntities.paymentDetailEntity.paymentReversedEntity"
+        const val EAGER_PAYMENT_ITEMS_PAYMENT_DETAIL = "PaymentEntity.eager.paymentItemEntities.paymentDetailEntity"
+
+        const val EAGER_TRANSACTION = "Transaction"
+
+}
+@NamedEntityGraphs(
+        NamedEntityGraph(name = EAGER_PAYMENT_ITEMS_TRANSACTION_TRANSACTION_DETAIL_PAYMENT_DETAIL_PAYMENT_REVERSED,
+                attributeNodes = arrayOf(
+                        NamedAttributeNode(
+                                value = "paymentItemEntities",
+                                subgraph = EAGER_TRANSACTION),
+                        NamedAttributeNode(
+                                value = "paymentDetailEntity")//,
+                       //NamedAttributeNode(
+                       //         value = "paymentReversedEntity")
+                ),
+                subgraphs = arrayOf(
+                        NamedSubgraph(
+                                name = EAGER_TRANSACTION,
+                                attributeNodes = arrayOf(NamedAttributeNode(value = "transactionEntities", subgraph = "transactionDetailEntity")
+                                )
+                        ),
+                        NamedSubgraph(
+                                name = "transactionDetailEntity",
+                                attributeNodes = arrayOf(NamedAttributeNode(value = "transactionDetailEntity")
+                                )
+                        )
+                )
+        ),
+        NamedEntityGraph(name = EAGER_PAYMENT_ITEMS_PAYMENT_DETAIL,
+                attributeNodes = arrayOf(NamedAttributeNode(value = "paymentItemEntities"),
+                        NamedAttributeNode(
+                        value = "paymentDetailEntity")))
+)
+
 @Entity
 @Table(name = "vw_payment")
 data class PaymentEntity(
@@ -41,9 +95,19 @@ data class PaymentEntity(
         @PrimaryKeyJoinColumn
         var paymentDetailEntity: PaymentDetailEntity,
 
+        @OneToOne(cascade = arrayOf(CascadeType.ALL), fetch = FetchType.LAZY)
+        @JoinColumn(name="payment_id")
+        val paymentReversedEntity: PaymentReversedEntity? = null,
+
+
+//        @OneToMany(cascade = arrayOf(CascadeType.ALL), fetch = FetchType.LAZY)
+//        @JoinColumn(name = "payment_id", nullable = false, updatable = false)
+//        val paymentItemEntities: MutableSet<PaymentItemEntity>
+
         @OneToMany(cascade = arrayOf(CascadeType.ALL), fetch = FetchType.LAZY)
         @JoinColumn(name = "payment_id", nullable = false, updatable = false)
-        val items: MutableSet<PaymentItemEntity>
+        val paymentItemEntities: List<PaymentItemEntity>
+
 
 ) {
 
@@ -56,7 +120,7 @@ data class PaymentEntity(
             paymentAmount = 0,
             reference = "",
             paymentDetailEntity = PaymentDetailEntity(),
-            items = mutableSetOf()
+            paymentItemEntities = mutableListOf()
     )
 }
 enum class PaymentType(val description: String) {
@@ -68,3 +132,11 @@ enum class PaymentType(val description: String) {
                 @JvmField val PRESENTABLE_TYPES = listOf(EFT, CHEQUE)
         }
 }
+
+fun joinPaymentPaymentReversalPaymentItemTransactionTransactionDetail(paymentId: Long?): Specifications<TransactionEntity>? = paymentId?.let {
+        where {
+                equal(it.join(TransactionEntity::transactionDetailEntity).get(TransactionDetailEntity::paymentId), paymentId)
+        }
+
+}
+

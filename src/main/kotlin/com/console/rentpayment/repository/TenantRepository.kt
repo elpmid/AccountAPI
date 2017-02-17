@@ -16,9 +16,9 @@ interface TenantRepository  : JpaRepository<Tenant, Long> {
 
     fun findByName(name: String): Tenant
 
-   // @EntityGraph(value = "Tenant.tenantRentReceipts", type = EntityGraph.EntityGraphType.LOAD)
-    @Query("SELECT DISTINCT t FROM TENANT t JOIN FETCH t.rentReceipts r WHERE r.createdDate >= :date")
-    fun getTenantsWithRentReceiptsCreatedAfter(@Param("date") date : LocalDateTime) : List<Tenant>
+  // @EntityGraph(value = "Tenant.tenantRentReceipts", type = EntityGraph.EntityGraphType.LOAD)
+   // @Query("SELECT DISTINCT t FROM TENANT t JOIN FETCH t.rentReceipts r WHERE r.createdDate >= :date")
+  //  fun getTenantsWithRentReceiptsCreatedAfter(@Param("date") date : LocalDateTime) : List<Tenant>
 
     @EntityGraph(value = "Tenant.tenantRentReceipts", type = EntityGraph.EntityGraphType.LOAD)
     fun findById(tenantId : Long) : Tenant

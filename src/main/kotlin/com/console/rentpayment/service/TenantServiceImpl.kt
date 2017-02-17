@@ -4,10 +4,7 @@ import com.console.rentpayment.dataTransferObject.TenantRequest
 import com.console.rentpayment.dataTransferObject.TenantResponse
 import com.console.rentpayment.dataTransferObject.TenantSummaryResponse
 import com.console.rentpayment.domain.Tenant
-import com.console.rentpayment.logging.LogLevel
-import com.console.rentpayment.logging.LogLevelToProperties
-import com.console.rentpayment.logging.Loggable
-import com.console.rentpayment.logging.Loggable2
+
 import com.console.rentpayment.repository.TenantRepository
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -51,7 +48,6 @@ open class TenantServiceImpl : TenantService {
 
 
     //Save a Tenant
-    @Loggable()
     override fun saveTenant(tenantRequeast : TenantRequest) : TenantResponse {
         var tenant : Tenant = toTenant(tenantRequeast)
         tenant = tenantRepository.save(tenant)
@@ -61,8 +57,6 @@ open class TenantServiceImpl : TenantService {
 
     //Update Tenant
 
-    @Loggable2(debugProperties = arrayOf("#tenant.name", "#tenantRequest.name", "#result.id"),
-               errorProperties = arrayOf("#tenant","#tenant.name", "#result.id"))
     override fun updateTenant(tenant : Tenant, tenantRequest: TenantRequest) : TenantResponse {
         tenant.name = tenantRequest.name
         tenant.weeklyRentAmount = tenantRequest.weeklyRentAmount
@@ -79,11 +73,11 @@ open class TenantServiceImpl : TenantService {
 
 
     //List all Tenants which have a Rent Receipt that was created within the last “N” hours
-    override fun getTenantsWithRentReceiptsCreateInLastNHours(hours : Long) : List<TenantSummaryResponse> {
-        val date : LocalDateTime = LocalDateTime.now().minusHours(hours)
-        val tenants : List<Tenant> = tenantRepository.getTenantsWithRentReceiptsCreatedAfter(date)
-        return toTenantSummaryResponse(tenants)
-    }
+  //  override fun getTenantsWithRentReceiptsCreateInLastNHours(hours : Long) : List<TenantSummaryResponse> {
+  //      val date : LocalDateTime = LocalDateTime.now().minusHours(hours)
+  //      val tenants : List<Tenant> = tenantRepository.getTenantsWithRentReceiptsCreatedAfter(date)
+  //      return toTenantSummaryResponse(tenants)
+  //  }
 
 
     //Convert a list of Tenant domain objects to a List of TenantSummaryReponse DTOs

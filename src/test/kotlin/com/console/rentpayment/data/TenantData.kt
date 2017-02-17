@@ -29,10 +29,10 @@ open class TenantData {
 
     @Transactional
     fun createTeants(numberToCreate : Int) : List<Tenant> {
-        var tenants : MutableList<Tenant> = ArrayList()
+        val tenants : MutableList<Tenant> = ArrayList()
         var i : Int = 1
         while (i <= numberToCreate) {
-            var tenant =  Tenant("Tenant", Money.of(CurrencyUnit.of("AUD"), BigDecimal(500)), LocalDateTime.now(),
+            val tenant =  Tenant("Tenant", Money.of(CurrencyUnit.of("AUD"), BigDecimal(500)), LocalDateTime.now(),
                                  Money.of(CurrencyUnit.of("AUD"), BigDecimal(50)))
             tenants.add(tenant)
             i++
@@ -46,7 +46,7 @@ open class TenantData {
         var tenants : MutableList<Tenant> = ArrayList()
         var i : Int = 1
         while (i <= numberOfTenantsToCreate) {
-            var tenant =  Tenant("Tenant" + i, Money.of(CurrencyUnit.of("AUD"), BigDecimal(500)), LocalDateTime.now(),
+            val tenant =  Tenant("Tenant" + i, Money.of(CurrencyUnit.of("AUD"), BigDecimal(500)), LocalDateTime.now(),
                                   Money.of(CurrencyUnit.of("AUD"), BigDecimal(50)))
             tenant.rentReceipts = createRentReceipt(numberOfRentReceiptForTenantToCreate)
             tenants.add(tenant)
@@ -58,10 +58,10 @@ open class TenantData {
 
 
     private fun createRentReceipt(numberToCreate : Int) : MutableList<RentReceipt> {
-        var rentReceipts : MutableList<RentReceipt> = ArrayList()
+        val rentReceipts : MutableList<RentReceipt> = ArrayList()
         var i : Int = 1
         while (i <= numberToCreate) {
-            var rentReceipt : RentReceipt = RentReceipt()
+            val rentReceipt : RentReceipt = RentReceipt()
             rentReceipt.amount = Money.of(CurrencyUnit.of("AUD"), BigDecimal(50))
             rentReceipts.add(rentReceipt)
             i++
