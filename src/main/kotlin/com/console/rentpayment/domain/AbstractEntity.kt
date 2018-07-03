@@ -8,44 +8,26 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import java.time.LocalDateTime
 import javax.persistence.*
 
-
-/**
- * Created by Nick on 9/11/2016.
- */
-
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener::class)
-abstract class AbstractEntity {
+abstract class AbstractEntity (
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    var id: Long? = null
+        @Id
+        @GeneratedValue(strategy = GenerationType.AUTO)
+        var id: Long? = null,
 
-    @CreatedDate
-    var createdDate : LocalDateTime =  LocalDateTime.now()
+        // TODO have database populate this field
+        @CreatedDate
+        var createdDate : LocalDateTime =  LocalDateTime.now(),
 
-    @LastModifiedDate
-    var lastModifiedDate : LocalDateTime = LocalDateTime.now()
+        // TODO have database populate this field
+        @LastModifiedDate
+        var lastModifiedDate : LocalDateTime = LocalDateTime.now(),
 
-    @CreatedBy
-    var createdBy: String = ""
+        @CreatedBy
+        var createdBy: String = "",
 
-    @LastModifiedBy
-    var lastModifiedBy: String = ""
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is AbstractEntity) return false
-
-        if (id != other.id) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return id?.hashCode() ?: 0
-    }
-
-
-}
+        @LastModifiedBy
+        var lastModifiedBy: String = ""
+)
 

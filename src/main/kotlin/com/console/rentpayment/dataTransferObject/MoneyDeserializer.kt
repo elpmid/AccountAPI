@@ -7,16 +7,13 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import org.joda.money.CurrencyUnit
 import org.joda.money.Money
 
-
-
 /**
- * Created by Nick on 15/11/2016.
  * Using implementation from https://gist.github.com/stickfigure/b4d2af290407f9af4cce
  */
 open class MoneyDeserializer() : StdDeserializer<Money>(Money::class.java) {
 
     override fun deserialize(jp: JsonParser, ctxt: DeserializationContext): Money {
-        val moneyTree : JsonNode = jp.readValueAsTree()
+        val moneyTree: JsonNode = jp.readValueAsTree()
         val amount = moneyTree.get("amount").asInt()
         val currencyNode = moneyTree.get("currency")
         val currency = if (currencyNode == null) CurrencyUnit.USD else CurrencyUnit.of(currencyNode.asText())

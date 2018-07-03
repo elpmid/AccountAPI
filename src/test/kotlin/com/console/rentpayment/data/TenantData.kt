@@ -1,68 +1,66 @@
 package com.console.rentpayment.data
 
-import com.console.rentpayment.domain.RentReceipt
-import com.console.rentpayment.domain.Tenant
+import com.console.rentpayment.domain.RentReceiptEntity
+import com.console.rentpayment.domain.TenantEntity
 import com.console.rentpayment.repository.RentReceiptRepository
 import com.console.rentpayment.repository.TenantRepository
 import org.joda.money.CurrencyUnit
 import org.joda.money.Money
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.util.*
 
-
-/**
- * Created by Nick on 14/11/2016.
- */
-
 @Component
-open class TenantData {
-
-    @Autowired
-    open lateinit var tenantRepository: TenantRepository
-
-    @Autowired
-    open lateinit var rentReceiptRepository: RentReceiptRepository
+class TenantData(
+        val tenantRepository: TenantRepository,
+        val rentReceiptRepository: RentReceiptRepository
+) {
 
     @Transactional
-    fun createTeants(numberToCreate : Int) : List<Tenant> {
-        val tenants : MutableList<Tenant> = ArrayList()
-        var i : Int = 1
+    fun createTenants(numberToCreate: Int): List<TenantEntity> {
+        val tenants: MutableList<TenantEntity> = ArrayList()
+        var i = 1
         while (i <= numberToCreate) {
-            val tenant =  Tenant("Tenant", Money.of(CurrencyUnit.of("AUD"), BigDecimal(500)), LocalDateTime.now(),
-                                 Money.of(CurrencyUnit.of("AUD"), BigDecimal(50)))
+            val tenant = TenantEntity(
+                    leaseName = "LeaseName$i",
+                    name ="Tenant",
+                    weeklyRentAmount = Money.of(CurrencyUnit.of("AUD"), BigDecimal(500)),
+                    rentDatePaidTo = LocalDateTime.now(),
+                    rentCreditAmount = Money.of(CurrencyUnit.of("AUD"), BigDecimal(50)))
             tenants.add(tenant)
             i++
         }
-        return tenantRepository.save(tenants)
+        return tenantRepository.saveAll(tenants)
     }
 
-
     @Transactional
-    fun createTeantsWithRentReceipts(numberOfTenantsToCreate : Int, numberOfRentReceiptForTenantToCreate: Int) : List<Tenant> {
-        var tenants : MutableList<Tenant> = ArrayList()
-        var i : Int = 1
+    fun createTenantsWithRentReceipts(numberOfTenantsToCreate: Int, numberOfRentReceiptForTenantToCreate: Int): List<TenantEntity> {
+        var tenants: MutableList<TenantEntity> = mutableListOf()
+        var i: Int = 1
         while (i <= numberOfTenantsToCreate) {
-            val tenant =  Tenant("Tenant" + i, Money.of(CurrencyUnit.of("AUD"), BigDecimal(500)), LocalDateTime.now(),
-                                  Money.of(CurrencyUnit.of("AUD"), BigDecimal(50)))
+            val tenant = TenantEntity(
+                    leaseName = "LeaseName$i",
+                    name = "Tenant$i",
+                    weeklyRentAmount = Money.of(CurrencyUnit.of("AUD"), BigDecimal(500)),
+                    rentDatePaidTo = LocalDateTime.now(),
+                    rentCreditAmount = Money.of(CurrencyUnit.of("AUD"), BigDecimal(50)))
             tenant.rentReceipts = createRentReceipt(numberOfRentReceiptForTenantToCreate)
             tenants.add(tenant)
             i++
         }
-        tenants = tenantRepository.save(tenants)
-        return tenants
+        tenants = tenantRepository.saveAll(tenants)
+        return tenants.toList()
     }
 
-
-    private fun createRentReceipt(numberToCreate : Int) : MutableList<RentReceipt> {
-        val rentReceipts : MutableList<RentReceipt> = ArrayList()
-        var i : Int = 1
+    private fun createRentReceipt(numberToCreate: Int): MutableSet<RentReceiptEntity> {
+        val rentReceipts: MutableSet<RentReceiptEntity> = linkedSetOf()
+        var i: Int = 1
         while (i <= numberToCreate) {
-            val rentReceipt : RentReceipt = RentReceipt()
-            rentReceipt.amount = Money.of(CurrencyUnit.of("AUD"), BigDecimal(50))
+            val rentReceipt: RentReceiptEntity = RentReceiptEntity(
+                amount = Money.of(CurrencyUnit.of("AUD"), BigDecimal(50))
+            )
             rentReceipts.add(rentReceipt)
             i++
         }

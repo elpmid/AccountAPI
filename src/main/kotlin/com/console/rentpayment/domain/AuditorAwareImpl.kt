@@ -1,16 +1,13 @@
 package com.console.rentpayment.domain
 
 import org.springframework.data.domain.AuditorAware
-
-/**
- * Created by Nick on 9/11/2016.
- */
+import java.util.Optional
 
 open class AuditorAwareImpl : AuditorAware<String> {
 
     @Override
-    override fun getCurrentAuditor(): String {
+    override fun getCurrentAuditor(): Optional<String> {
         //TODO hook up with Spring Security
-        return "System"
+        return Optional.of("System")
     }
 }

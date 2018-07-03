@@ -20,24 +20,19 @@ import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-
-
-
-
-
 @SpringBootApplication
 @EnableJpaAuditing
 @EnableCaching
-@EnableJpaRepositories(repositoryBaseClass = SimpleJpaEntityGraphRepositoryImpl::class)
-open class AccountApiApplication {
+@EnableJpaRepositories
+class AccountApiApplication {
 
     @Bean
-    open fun auditorProvider(): AuditorAware<String> {
+    fun auditorProvider(): AuditorAware<String> {
         return AuditorAwareImpl()
     }
 
     @Bean
-    open fun objectMapperBuilder(): Jackson2ObjectMapperBuilder {
+    fun objectMapperBuilder(): Jackson2ObjectMapperBuilder {
         val builder = Jackson2ObjectMapperBuilder()
         builder.featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
         builder.featuresToDisable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE)
@@ -48,25 +43,6 @@ open class AccountApiApplication {
         builder.serializerByType(Money::class.java, MoneySerializer())
         return builder
     }
-
-//    @Bean
-//    open fun loggingInterceptor() : LoggingAspect {
-//        val cti: LoggingAspect = LoggingAspect()
-//        cti.setUseDynamicLogger(true)
-//        cti.setEnterMessage("Entering method '$PLACEHOLDER_METHOD_NAME($PLACEHOLDER_ARGUMENTS)' of class [$PLACEHOLDER_TARGET_CLASS_NAME]")
-//        cti.setExitMessage("Exiting method '" + PLACEHOLDER_METHOD_NAME + "' of class [" + PLACEHOLDER_TARGET_CLASS_NAME + "] returned '$PLACEHOLDER_RETURN_VALUE' took " + PLACEHOLDER_INVOCATION_TIME + "ms.")
-//        return cti
-//    }
-//
-//    @Bean
-//    open fun loggingAdvisor() : Advisor {
-//        val pointcut = AspectJExpressionPointcut()
-//        pointcut.expression = "execution(public * *(..)) && @annotation(com.console.rentpayment.logging.Loggable)"
-//        return DefaultPointcutAdvisor(pointcut, loggingInterceptor())
-//    }
-
-
-
 
 }
 
